@@ -16,7 +16,6 @@ model2 = load_model('C:/Last_Project/사람관절추적모델/pred_model/buyRefu
 model3 = load_model('C:/Last_Project/사람관절추적모델/pred_model/compar.h5')
 model4 = load_model('C:/Last_Project/사람관절추적모델/pred_model/jeon.h5')
 
-
 SCRIPT_DIR = Path(__file__).resolve().parent
 DEFAULT_MODEL = SCRIPT_DIR / "models/movenet_multipose_lightning_256x256_FP32.xml"
 
