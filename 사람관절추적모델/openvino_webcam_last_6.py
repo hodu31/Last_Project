@@ -231,8 +231,6 @@ class MovenetMPOpenvino:
         color_skeleton = (255, 180, 90)
         color_box = (0,255,255)
         for body in bodies:
-            if body.track_id not in self.predicted_label:
-                    self.predicted_label[body.track_id] = [[],[],[]]
             if self.tracking:
                 color_skeleton = color_box = TRACK_COLORS[body.track_id % len(TRACK_COLORS)]
                 
@@ -298,6 +296,9 @@ class MovenetMPOpenvino:
                     
             if body.track_id not in self.temp_array_dict:
                 self.temp_array_dict[body.track_id] = np.array([])
+                
+            if body.track_id not in self.predicted_label and len(self.temp_array_dict[body.track_id]) >= 200:
+                self.predicted_label[body.track_id] = [[], [], []]
                 
             
             # 모델 돌리기

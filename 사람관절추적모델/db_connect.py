@@ -1,37 +1,65 @@
 import mysql.connector
 
+def insert_db_data(data):
+    # MySQL 연결 정보 설정
+    config = {
+        'user': 'admin',
+        'password': 'noticare',
+        'host': 'db-noticare.cvcrdfcptqp8.ap-northeast-2.rds.amazonaws.com',
+        'database': 'security',
+        'port': 3306,
+        'raise_on_warnings': True
+    }
 
-# MySQL 데이터베이스 연결 설정
-config = {
-    'user': 'root',
-    'password': '0000',
-    'host': '127.0.0.1',
-    'database': 'security',
-    'port': 3306, 
-    'raise_on_warnings': True
-}
+    # 데이터베이스에 연결
+    cnx = mysql.connector.connect(**config)
 
-try:
-    # MySQL 데이터베이스에 연결
-    with mysql.connector.connect(**config) as conn:
-        with conn.cursor() as cursor:
-            # SQL 쿼리
-            sql = "SELECT * FROM lastpro_users;"
-            cursor.execute(sql)
+    # 커서 객체 생성
+    cursor = cnx.cursor()
 
-            # 데이터베이스에서 데이터 가져오기
-            rows = cursor.fetchall()
+    # 데이터를 삽입하는 SQL 쿼리 작성
+    insert_query = ("INSERT INTO lastpro_dan "
+                    "(USER_ID, SHOP_ID, DAN_V_ID, DAN_TIME, DAN_CODE) "
+                    "VALUES (%s, %s, %s, %s, %s)")
 
-            # 컬럼 이름 가져오기
-            colnames = cursor.description
-            cols = [col[0].lower() for col in colnames]
-            
-            list_dict = []
-            for row in rows:
-                row_dict = dict(zip(cols, row))
-                list_dict.append(row_dict)
+    # 데이터 삽입
+    cursor.execute(insert_query, tuple(data))
 
-            print(list_dict)
+    # 변경 사항 커밋
+    cnx.commit()
 
-except mysql.connector.Error as err:
-    print(f"오류: {err}")
+    # 커서 및 연결 닫기
+    cursor.close()
+    cnx.close()
+
+def insert_visit(data):
+    # MySQL 연결 정보 설정
+    config = {
+        'user': 'admin',
+        'password': 'noticare',
+        'host': 'db-noticare.cvcrdfcptqp8.ap-northeast-2.rds.amazonaws.com',
+        'database': 'security',
+        'port': 3306,
+        'raise_on_warnings': True
+    }
+    
+    # 데이터베이스에 연결
+    cnx = mysql.connector.connect(**config)
+
+    # 커서 객체 생성
+    cursor = cnx.cursor()
+
+    # 데이터를 삽입하는 SQL 쿼리 작성
+    insert_query = ("INSERT INTO lastpro_visit "
+                    "(USER_ID, SHOP_ID,  V_ID,  V_ENTIME) "
+                    "VALUES (%s, %s, %s, %s)")
+
+    # 데이터 삽입
+    cursor.execute(insert_query, tuple(data))
+
+    # 변경 사항 커밋
+    cnx.commit()
+
+    # 커서 및 연결 닫기
+    cursor.close()
+    cnx.close()
