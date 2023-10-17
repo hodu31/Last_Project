@@ -319,8 +319,8 @@ class MovenetMPOpenvino:
             if body.track_id not in self.predicted_label and len(self.temp_array_dict[body.track_id]) >= 200:
                 self.predicted_label[body.track_id] = [[], [], []]
                 
-            if body.track_id not in self.time_data and len(self.temp_array_dict[body.track_id]) >= 200:
-                self.time_data[body.track_id] = [[now_time], [now_time], [now_time]]
+            # if body.track_id not in self.time_data and len(self.temp_array_dict[body.track_id]) >= 200:
+            #     self.time_data[body.track_id] = [[now_time], [now_time], [now_time]]
             
             
             # 모델 돌리기
@@ -378,10 +378,15 @@ class MovenetMPOpenvino:
                     self.predicted_label[body.track_id][1] = 'NO_compare'
                 elif np.argmax(prediction) == 1:
                     self.predicted_label[body.track_id][1] = 'YES_compare' 
-                    if (now_time - self.time_data[body.track_id][0][0]).seconds >= 30:
+                    if self.time_data[body.track_id][0][0] == None :
                         self.time_data[body.track_id][1] = now_time
                         data = [self.user_id ,self.shop_id, body.track_id, now_time, 2]
                         insert_db_data(data)
+                    elif (now_time - self.time_data[body.track_id][0][0]).seconds >= 30:
+                        self.time_data[body.track_id][1] = now_time
+                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 2]
+                        insert_db_data(data)
+                        
                         
                 
                 
