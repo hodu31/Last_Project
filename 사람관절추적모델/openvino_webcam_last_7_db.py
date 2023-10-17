@@ -355,7 +355,7 @@ class MovenetMPOpenvino:
                         self.time_data[body.track_id][0] = [now_time]
                         data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
                         insert_db_data(data)
-                    elif len(self.time_data[body.track_id][1]) != 0:
+                    elif len(self.time_data[body.track_id][0]) != 0:
                         if (now_time - self.time_data[body.track_id][0][0]).seconds >= 30:
                             self.time_data[body.track_id][0] = [now_time]
                             data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
@@ -428,7 +428,7 @@ class MovenetMPOpenvino:
                         data = [self.user_id ,self.shop_id, body.track_id, now_time, 3]
                         insert_db_data(data)
                     elif len(self.time_data[body.track_id][2]) != 0 :
-                        if (now_time - self.time_data[body.track_id][2][0]).seconds >= 30:
+                        if (now_time - self.time_data[body.track_id][2][0]).seconds >= 10:
                             self.time_data[body.track_id][2] = [now_time]
                             data = [self.user_id ,self.shop_id, body.track_id, now_time, 3]
                             insert_db_data(data)
@@ -437,7 +437,7 @@ class MovenetMPOpenvino:
 
             if self.predicted_label is not None and body.track_id in self.predicted_label:
                 text_position_1 = (body.xmin, body.ymin+30)
-                cv2.putText(frame, "pred:{}".format(self.predicted_label[body.track_id]), text_position_1, cv2.FONT_HERSHEY_PLAIN, 3, color_box, 3)
+                cv2.putText(frame, "pred:{}".format(self.predicted_label[body.track_id]), text_position_1, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
             
                 
     def save_to_array(self, bodies):
@@ -512,7 +512,10 @@ class MovenetMPOpenvino:
                 bodies = self.tracker.apply(bodies, now())
             self.pd_render(frame, bodies)
             nb_pd_inferences += 1
-            self.save_to_array(bodies)
+            
+            # 2프레임 마다 저장
+            if self.frame_counter % 2 == 0:  # 2프레임마다 조건을 확인
+                self.save_to_array(bodies)
 
             self.fps.update()               
 
