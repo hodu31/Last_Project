@@ -303,11 +303,13 @@ class MovenetMPOpenvino:
                 self.prev_keypoints[body.track_id] = current_keypoints  # 현재 키포인트를 저장합니다.
                 
             
-            
             now_time = datetime.now()
+            now_time = now_time.replace(microsecond=0)
             
+            # 방문객 입장시간 넣기
             if body.track_id not in self.visited_tracks:
                 now = datetime.now()
+                now = now.replace(microsecond=0)
                 data_1 = [self.user_id, self.shop_id, body.track_id, now]
                 insert_visit(data_1)
                 self.visited_tracks[body.track_id] = True  # 2. 코드 실행 후에 body.track_id를 visited_tracks에 추
