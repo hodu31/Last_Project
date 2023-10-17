@@ -352,12 +352,12 @@ class MovenetMPOpenvino:
                     
                     
                     if len(self.time_data[body.track_id][0]) == 0:
-                        self.time_data[body.track_id][0] = now_time
+                        self.time_data[body.track_id][0] = [now_time]
                         data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
                         insert_db_data(data)
                     elif len(self.time_data[body.track_id][1]) != 0:
                         if (now_time - self.time_data[body.track_id][0][0]).seconds >= 30:
-                            self.time_data[body.track_id][0] = now_time
+                            self.time_data[body.track_id][0] = [now_time]
                             data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
                             insert_db_data(data)
                         
@@ -388,12 +388,12 @@ class MovenetMPOpenvino:
                     self.predicted_label[body.track_id][1] = 'YES_compare' 
                     
                     if len(self.time_data[body.track_id][1]) == 0:
-                        self.time_data[body.track_id][1] = now_time
+                        self.time_data[body.track_id][1] = [now_time]
                         data = [self.user_id ,self.shop_id, body.track_id, now_time, 2]
                         insert_db_data(data)
                     elif len(self.time_data[body.track_id][1]) != 0:
                         if (now_time - self.time_data[body.track_id][1][0]).seconds >= 30:
-                            self.time_data[body.track_id][1] = now_time
+                            self.time_data[body.track_id][1] = [now_time]
                             data = [self.user_id ,self.shop_id, body.track_id, now_time, 2]
                             insert_db_data(data)
                         
@@ -424,12 +424,12 @@ class MovenetMPOpenvino:
                     self.predicted_label[body.track_id][2] = 'YES_jeon'
                     
                     if len(self.time_data[body.track_id][2]) == 0:
-                        self.time_data[body.track_id][2] = now_time
+                        self.time_data[body.track_id][2] = [now_time]
                         data = [self.user_id ,self.shop_id, body.track_id, now_time, 3]
                         insert_db_data(data)
                     elif len(self.time_data[body.track_id][2]) != 0 :
                         if (now_time - self.time_data[body.track_id][2][0]).seconds >= 30:
-                            self.time_data[body.track_id][2] = now_time
+                            self.time_data[body.track_id][2] = [now_time]
                             data = [self.user_id ,self.shop_id, body.track_id, now_time, 3]
                             insert_db_data(data)
 
