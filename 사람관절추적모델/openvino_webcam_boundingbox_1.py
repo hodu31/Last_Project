@@ -266,6 +266,7 @@ class MovenetMPOpenvino:
             
     def save_to_array(self, bodies):
         data_rows = []
+        
         for body in bodies:
             data_row = [len(bodies)]  # Start with the total number of bodies
             for name, index in KEYPOINT_DICT.items():
@@ -282,7 +283,6 @@ class MovenetMPOpenvino:
             self.temp_array = np.array(data_rows)
         else:
             self.temp_array = np.vstack((self.temp_array, data_rows))
-
 
     def run(self):
 

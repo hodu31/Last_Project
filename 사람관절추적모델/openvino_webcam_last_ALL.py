@@ -14,6 +14,7 @@ from datetime import datetime
 import mysql.connector
 from db_connect import insert_db_data
 from db_connect import insert_visit
+from db_connect import insert_vio
 
 
 model1 = load_model('C:/Last_Project/사람관절추적모델/pred_model/buyRefund.h5')
@@ -24,6 +25,7 @@ model5 = load_model('C:/Last_Project/사람관절추적모델/pred_model/select.
 model6 = load_model('C:/Last_Project/사람관절추적모델/pred_model/smoke.h5')
 model7 = load_model('C:/Last_Project/사람관절추적모델/pred_model/theft.h5')
 model8 = load_model('C:/Last_Project/사람관절추적모델/pred_model/yugi.h5')
+model9 = load_model('C:/Last_Project/사람관절추적모델/pred_model/violence.h5')
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -114,11 +116,14 @@ class MovenetMPOpenvino:
         self.visited_tracks = {} 
         self.user_id = 'a001'
         self.shop_id = '#001'
+        self.vio_time = None
         self.predicted_label = {}
+        self.predict_violence = None
         self.time_data = {}
         self.db_data = []
         self.prev_keypoints = {}
         self.temp_array_dict = {}
+        self.array_list = []
         self.stop_frame_count_dict = {}
         self.stop_frame_count = 0
         self.frame_counter = 0
@@ -334,7 +339,7 @@ class MovenetMPOpenvino:
 ################################################# 모델##############################################
             
             # buy Refund
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 180 == 0:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 0:
                 input_data = self.temp_array_dict[body.track_id].copy()
 
                 # 패딩 추가
@@ -372,7 +377,7 @@ class MovenetMPOpenvino:
                             
                             
             # compare
-            if len(self.temp_array_dict[body.track_id]) >= 200 and (self.frame_counter-20) % 180 == 0:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 20:
                 input_data = self.temp_array_dict[body.track_id].copy()
 
                 # 패딩 추가
@@ -398,19 +403,19 @@ class MovenetMPOpenvino:
                     self.predicted_label[body.track_id][1] = 'YES_compare'
                     
                     
-                    if len(self.time_data[body.track_id][0]) == 0:
-                        self.time_data[body.track_id][0] = [now_time]
-                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
+                    if len(self.time_data[body.track_id][1]) == 0:
+                        self.time_data[body.track_id][1] = [now_time]
+                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 2]
                         insert_db_data(data)
-                    elif len(self.time_data[body.track_id][0]) != 0:
-                        if (now_time - self.time_data[body.track_id][0][0]).seconds >= 30:
-                            self.time_data[body.track_id][0] = [now_time]
-                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
+                    elif len(self.time_data[body.track_id][1]) != 0:
+                        if (now_time - self.time_data[body.track_id][1][0]).seconds >= 30:
+                            self.time_data[body.track_id][1] = [now_time]
+                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 2]
                             insert_db_data(data)
                             
                             
             # fire
-            if len(self.temp_array_dict[body.track_id]) >= 200 and (self.frame_counter-40) % 180 == 0:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 40:
                 input_data = self.temp_array_dict[body.track_id].copy()
 
                 # 패딩 추가
@@ -436,19 +441,19 @@ class MovenetMPOpenvino:
                     self.predicted_label[body.track_id][2] = 'YES_fire'
                     
                     
-                    if len(self.time_data[body.track_id][0]) == 0:
-                        self.time_data[body.track_id][0] = [now_time]
-                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
+                    if len(self.time_data[body.track_id][2]) == 0:
+                        self.time_data[body.track_id][2] = [now_time]
+                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 3]
                         insert_db_data(data)
-                    elif len(self.time_data[body.track_id][0]) != 0:
-                        if (now_time - self.time_data[body.track_id][0][0]).seconds >= 30:
-                            self.time_data[body.track_id][0] = [now_time]
-                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
+                    elif len(self.time_data[body.track_id][2]) != 0:
+                        if (now_time - self.time_data[body.track_id][2][0]).seconds >= 30:
+                            self.time_data[body.track_id][2] = [now_time]
+                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 3]
                             insert_db_data(data)
                             
                             
             # jeon
-            if len(self.temp_array_dict[body.track_id]) >= 200 and (self.frame_counter-60) % 180 == 0:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 60:
                 input_data = self.temp_array_dict[body.track_id].copy()
 
                 # 패딩 추가
@@ -474,19 +479,19 @@ class MovenetMPOpenvino:
                     self.predicted_label[body.track_id][3] = 'YES_jeon'
                     
                     
-                    if len(self.time_data[body.track_id][0]) == 0:
-                        self.time_data[body.track_id][0] = [now_time]
-                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
+                    if len(self.time_data[body.track_id][3]) == 0:
+                        self.time_data[body.track_id][3] = [now_time]
+                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 4]
                         insert_db_data(data)
-                    elif len(self.time_data[body.track_id][0]) != 0:
-                        if (now_time - self.time_data[body.track_id][0][0]).seconds >= 30:
-                            self.time_data[body.track_id][0] = [now_time]
-                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
+                    elif len(self.time_data[body.track_id][3]) != 0:
+                        if (now_time - self.time_data[body.track_id][3][0]).seconds >= 30:
+                            self.time_data[body.track_id][3] = [now_time]
+                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 4]
                             insert_db_data(data)
                             
                             
             # select
-            if len(self.temp_array_dict[body.track_id]) >= 200 and (self.frame_counter-80) % 180 == 0:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 80:
                 input_data = self.temp_array_dict[body.track_id].copy()
 
                 # 패딩 추가
@@ -512,19 +517,19 @@ class MovenetMPOpenvino:
                     self.predicted_label[body.track_id][4] = 'YES_select'
                     
                     
-                    if len(self.time_data[body.track_id][0]) == 0:
-                        self.time_data[body.track_id][0] = [now_time]
-                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
+                    if len(self.time_data[body.track_id][4]) == 0:
+                        self.time_data[body.track_id][4] = [now_time]
+                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 5]
                         insert_db_data(data)
-                    elif len(self.time_data[body.track_id][0]) != 0:
-                        if (now_time - self.time_data[body.track_id][0][0]).seconds >= 30:
-                            self.time_data[body.track_id][0] = [now_time]
-                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
+                    elif len(self.time_data[body.track_id][4]) != 0:
+                        if (now_time - self.time_data[body.track_id][4][0]).seconds >= 30:
+                            self.time_data[body.track_id][4] = [now_time]
+                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 5]
                             insert_db_data(data)
                             
                             
             # smoke
-            if len(self.temp_array_dict[body.track_id]) >= 200 and (self.frame_counter-100) % 180 == 0:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 100:
                 input_data = self.temp_array_dict[body.track_id].copy()
 
                 # 패딩 추가
@@ -550,19 +555,19 @@ class MovenetMPOpenvino:
                     self.predicted_label[body.track_id][5] = 'YES_smoke'
                     
                     
-                    if len(self.time_data[body.track_id][0]) == 0:
-                        self.time_data[body.track_id][0] = [now_time]
-                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
+                    if len(self.time_data[body.track_id][5]) == 0:
+                        self.time_data[body.track_id][5] = [now_time]
+                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 6]
                         insert_db_data(data)
-                    elif len(self.time_data[body.track_id][0]) != 0:
-                        if (now_time - self.time_data[body.track_id][0][0]).seconds >= 30:
-                            self.time_data[body.track_id][0] = [now_time]
-                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
+                    elif len(self.time_data[body.track_id][5]) != 0:
+                        if (now_time - self.time_data[body.track_id][5][0]).seconds >= 30:
+                            self.time_data[body.track_id][5] = [now_time]
+                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 6]
                             insert_db_data(data)
                             
                             
             # theft
-            if len(self.temp_array_dict[body.track_id]) >= 200 and (self.frame_counter-120) % 180 == 0:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 120:
                 input_data = self.temp_array_dict[body.track_id].copy()
 
                 # 패딩 추가
@@ -588,20 +593,20 @@ class MovenetMPOpenvino:
                     self.predicted_label[body.track_id][6] = 'YES_theft'
                     
                     
-                    if len(self.time_data[body.track_id][0]) == 0:
-                        self.time_data[body.track_id][0] = [now_time]
-                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
+                    if len(self.time_data[body.track_id][6]) == 0:
+                        self.time_data[body.track_id][6] = [now_time]
+                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 7]
                         insert_db_data(data)
-                    elif len(self.time_data[body.track_id][0]) != 0:
-                        if (now_time - self.time_data[body.track_id][0][0]).seconds >= 30:
-                            self.time_data[body.track_id][0] = [now_time]
-                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
+                    elif len(self.time_data[body.track_id][6]) != 0:
+                        if (now_time - self.time_data[body.track_id][6][0]).seconds >= 30:
+                            self.time_data[body.track_id][6] = [now_time]
+                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 7]
                             insert_db_data(data)
                         
                     
             
              # yugi
-            if len(self.temp_array_dict[body.track_id]) >= 200 and (self.frame_counter-140) % 180 == 0:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 140:
                 input_data = self.temp_array_dict[body.track_id].copy()
                 
                 # 패딩 추가
@@ -624,16 +629,50 @@ class MovenetMPOpenvino:
                 elif np.argmax(prediction) == 1:
                     self.predicted_label[body.track_id][7] = 'YES_yugi' 
                     
-                    if len(self.time_data[body.track_id][1]) == 0:
-                        self.time_data[body.track_id][1] = [now_time]
-                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 2]
+                    if len(self.time_data[body.track_id][7]) == 0:
+                        self.time_data[body.track_id][7] = [now_time]
+                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 8]
                         insert_db_data(data)
-                    elif len(self.time_data[body.track_id][1]) != 0:
-                        if (now_time - self.time_data[body.track_id][1][0]).seconds >= 30:
-                            self.time_data[body.track_id][1] = [now_time]
-                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 2]
+                    elif len(self.time_data[body.track_id][7]) != 0:
+                        if (now_time - self.time_data[body.track_id][7][0]).seconds >= 30:
+                            self.time_data[body.track_id][7] = [now_time]
+                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 8]
                             insert_db_data(data)
-                        
+                            
+            #violence
+            if len(self.array_list) >= 200 and self.frame_counter % 160 == 150:
+                input_data = self.array_list.copy()
+                input_data = np.array(input_data)
+                input_data = input_data.astype(np.float32)
+                
+                # 패딩 추가
+                padding = np.zeros((610 - input_data.shape[0], 27))
+                input_data = np.vstack((input_data, padding))
+                
+                # 마지막 열에 인덱스 추가
+                index_array = np.arange(input_data.shape[0]).reshape(-1, 1)
+                input_data = np.hstack((input_data, index_array))
+                
+                # 데이터 형변환
+                input_data = input_data.astype(np.float32)
+                
+                input_data = np.array([input_data])
+                prediction = model9.predict(input_data)
+                
+                if np.argmax(prediction) == 0:
+                    self.predict_violence = 'NO_violence'
+                elif np.argmax(prediction) == 1:
+                    self.predict_violence = 'YES_violence'
+                    
+                    if self.vio_time is None:
+                        self.vio_time = now_time
+                        data = [len(bodies), now_time]
+                        insert_vio(data)
+                    elif self.vio_time != 0:
+                        if (now_time - self.vio_time).seconds >= 30:
+                            self.vio_time = now_time
+                            data = [len(bodies), now_time]
+                            insert_vio(data)
 
 
 
@@ -642,10 +681,14 @@ class MovenetMPOpenvino:
                 text_position_2 = (body.xmin, body.ymin+60)
                 text_position_3 = (body.xmin, body.ymin+90)
                 text_position_4 = (body.xmin, body.ymin+120)
-                cv2.putText(frame, "pred:{}".format(self.predicted_label[body.track_id][0:2]), text_position_1, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
-                cv2.putText(frame, "pred:{}".format(self.predicted_label[body.track_id][2:4]), text_position_2, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
-                cv2.putText(frame, "pred:{}".format(self.predicted_label[body.track_id][4:6]), text_position_3, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
-                cv2.putText(frame, "pred:{}".format(self.predicted_label[body.track_id][6:8]), text_position_4, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
+                cv2.putText(frame, "{}".format(self.predicted_label[body.track_id][0:2]), text_position_1, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
+                cv2.putText(frame, "{}".format(self.predicted_label[body.track_id][2:4]), text_position_2, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
+                cv2.putText(frame, "{}".format(self.predicted_label[body.track_id][4:6]), text_position_3, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
+                cv2.putText(frame, "{}".format(self.predicted_label[body.track_id][6:8]), text_position_4, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
+                
+            if self.predict_violence is not None:
+                text_position_5 = (body.xmin, body.ymin+160)
+                cv2.putText(frame, "{}".format(self.predict_violence), text_position_5, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
                 
     def save_to_array(self, bodies):
         if not hasattr(self, 'temp_array_dict'):
@@ -689,7 +732,39 @@ class MovenetMPOpenvino:
             ## 데이터 확인하기 
             # for track_id, array in self.temp_array_dict.items():
             #     print(track_id, array)
+            
+    
+    def save_vio(self, bodies):
+        if not hasattr(self, 'array_list'):
+            self.array_list = []
 
+        for body in bodies:
+            head_position = compute_head_position(body.keypoints)
+            
+            if head_position:
+                body.keypoints[KEYPOINT_DICT['head']] = head_position
+                
+            data_row = [len(bodies)]
+            
+            COLUMN_ORDER = [
+                'left_shoulder', 'left_elbow', 'left_wrist',
+                'right_shoulder', 'right_elbow', 'right_wrist',
+                'left_hip', 'left_knee', 'left_ankle',
+                'right_hip', 'right_knee', 'right_ankle',
+                'head']
+
+            for column in COLUMN_ORDER:
+                joint_index = KEYPOINT_DICT[column.lower()]
+                data_row.extend([body.keypoints[joint_index][0], body.keypoints[joint_index][1]])
+                
+            self.array_list.append(data_row)
+            
+            # 데이터 확인하기 
+            
+            #print(self.array_list)
+    
+    
+    
     def run(self):
 
         self.fps = FPS()
@@ -723,6 +798,8 @@ class MovenetMPOpenvino:
             # 2프레임 마다 저장
             if self.frame_counter % 2 == 0:  # 2프레임마다 조건을 확인
                 self.save_to_array(bodies)
+                
+            self.save_vio(bodies)
 
             self.fps.update()               
 
