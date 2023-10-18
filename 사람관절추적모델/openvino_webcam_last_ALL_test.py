@@ -633,6 +633,9 @@ class MovenetMPOpenvino:
             self.array_list = []
 
         for body in bodies:
+            if len(self.array_list) >= 200:
+                self.array_list = self.array_list[1:]
+            
             head_position = compute_head_position(body.keypoints)
             
             if head_position:
