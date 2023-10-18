@@ -148,7 +148,7 @@ class MovenetMPOpenvino:
             self.input_type = "video"
             if input_src.isdigit(): 
                 input_type = "webcam"
-                input_src = 2 #int(input_src)
+                input_src = int(input_src) #2
             self.cap = cv2.VideoCapture(input_src)
             self.video_fps = int(self.cap.get(cv2.CAP_PROP_FPS))
             self.img_w = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -245,6 +245,27 @@ class MovenetMPOpenvino:
                 bodies.append(body)
         return bodies
     
+    
+    def update_predictions_and_time_data(body, model, prediction_index, action_number, now_time):
+        input_data = pad_and_process_input(self.temp_array_dict[body.track_id].copy())
+        prediction = model.predict(input_data)
+        
+        if np.argmax(prediction) == 1:
+            self.predicted_label[body.track_id][prediction_index] = f'YES_{action_number}'
+            
+            if not self.time_data[body.track_id][prediction_index]:
+                self.time_data[body.track_id][prediction_index] = [now_time]
+                data = [self.user_id, self.shop_id, body.track_id, now_time, action_number]
+                insert_db_data(data)
+            else:
+                if (now_time - self.time_data[body.track_id][prediction_index][0]).seconds >= 30:
+                    self.time_data[body.track_id][prediction_index] = [now_time]
+                    data = [self.user_id, self.shop_id, body.track_id, now_time, action_number]
+                    insert_db_data(data)
+        else:
+            self.predicted_label[body.track_id][prediction_index] = f'NO_{action_number}'
+    
+    
 ### 웹캠에 표시하는 부분
     def pd_render(self, frame, bodies):
         thickness = 3 
@@ -335,6 +356,13 @@ class MovenetMPOpenvino:
             if body.track_id not in self.time_data and len(self.temp_array_dict[body.track_id]) >= 200:
                 self.time_data[body.track_id] = [[], [], [], [], [], [], [], []]
             
+            def preprocessing(input_data):
+                padding = np.zeros((610 - input_data.shape[0], 27))
+                input_data = np.vstack((input_data, padding))
+                index_array = np.arange(input_data.shape[0]).reshape(-1, 1)
+                input_data = np.hstack((input_data, index_array))
+                input_data = input_data.astype(np.float32)
+                return np.array([input_data])
 
 ################################################# 모델##############################################
             
@@ -342,18 +370,7 @@ class MovenetMPOpenvino:
             if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 0:
                 input_data = self.temp_array_dict[body.track_id].copy()
 
-                # 패딩 추가
-                padding = np.zeros((610 - input_data.shape[0], 27))
-                input_data = np.vstack((input_data, padding))
-                
-                # 마지막 열에 인덱스 추가
-                index_array = np.arange(input_data.shape[0]).reshape(-1, 1)
-                input_data = np.hstack((input_data, index_array))
-                
-                # 데이터 형변환
-                input_data = input_data.astype(np.float32)
-                
-                input_data = np.array([input_data])
+                input_data = preprocessing(input_data)
                 
                 prediction = model1.predict(input_data)
                 
@@ -380,18 +397,7 @@ class MovenetMPOpenvino:
             if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 20:
                 input_data = self.temp_array_dict[body.track_id].copy()
 
-                # 패딩 추가
-                padding = np.zeros((610 - input_data.shape[0], 27))
-                input_data = np.vstack((input_data, padding))
-                
-                # 마지막 열에 인덱스 추가
-                index_array = np.arange(input_data.shape[0]).reshape(-1, 1)
-                input_data = np.hstack((input_data, index_array))
-                
-                # 데이터 형변환
-                input_data = input_data.astype(np.float32)
-                
-                input_data = np.array([input_data])
+                input_data = preprocessing(input_data)
                 
                 prediction = model2.predict(input_data)
                 
@@ -418,18 +424,7 @@ class MovenetMPOpenvino:
             if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 40:
                 input_data = self.temp_array_dict[body.track_id].copy()
 
-                # 패딩 추가
-                padding = np.zeros((610 - input_data.shape[0], 27))
-                input_data = np.vstack((input_data, padding))
-                
-                # 마지막 열에 인덱스 추가
-                index_array = np.arange(input_data.shape[0]).reshape(-1, 1)
-                input_data = np.hstack((input_data, index_array))
-                
-                # 데이터 형변환
-                input_data = input_data.astype(np.float32)
-                
-                input_data = np.array([input_data])
+                input_data = preprocessing(input_data)
                 
                 prediction = model3.predict(input_data)
                 
@@ -456,18 +451,7 @@ class MovenetMPOpenvino:
             if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 60:
                 input_data = self.temp_array_dict[body.track_id].copy()
 
-                # 패딩 추가
-                padding = np.zeros((610 - input_data.shape[0], 27))
-                input_data = np.vstack((input_data, padding))
-                
-                # 마지막 열에 인덱스 추가
-                index_array = np.arange(input_data.shape[0]).reshape(-1, 1)
-                input_data = np.hstack((input_data, index_array))
-                
-                # 데이터 형변환
-                input_data = input_data.astype(np.float32)
-                
-                input_data = np.array([input_data])
+                input_data = preprocessing(input_data)
                 
                 prediction = model4.predict(input_data)
                 
@@ -494,18 +478,7 @@ class MovenetMPOpenvino:
             if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 80:
                 input_data = self.temp_array_dict[body.track_id].copy()
 
-                # 패딩 추가
-                padding = np.zeros((610 - input_data.shape[0], 27))
-                input_data = np.vstack((input_data, padding))
-                
-                # 마지막 열에 인덱스 추가
-                index_array = np.arange(input_data.shape[0]).reshape(-1, 1)
-                input_data = np.hstack((input_data, index_array))
-                
-                # 데이터 형변환
-                input_data = input_data.astype(np.float32)
-                
-                input_data = np.array([input_data])
+                input_data = preprocessing(input_data)
                 
                 prediction = model5.predict(input_data)
                 
@@ -532,18 +505,7 @@ class MovenetMPOpenvino:
             if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 100:
                 input_data = self.temp_array_dict[body.track_id].copy()
 
-                # 패딩 추가
-                padding = np.zeros((610 - input_data.shape[0], 27))
-                input_data = np.vstack((input_data, padding))
-                
-                # 마지막 열에 인덱스 추가
-                index_array = np.arange(input_data.shape[0]).reshape(-1, 1)
-                input_data = np.hstack((input_data, index_array))
-                
-                # 데이터 형변환
-                input_data = input_data.astype(np.float32)
-                
-                input_data = np.array([input_data])
+                input_data = preprocessing(input_data)
                 
                 prediction = model6.predict(input_data)
                 
@@ -570,18 +532,7 @@ class MovenetMPOpenvino:
             if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 120:
                 input_data = self.temp_array_dict[body.track_id].copy()
 
-                # 패딩 추가
-                padding = np.zeros((610 - input_data.shape[0], 27))
-                input_data = np.vstack((input_data, padding))
-                
-                # 마지막 열에 인덱스 추가
-                index_array = np.arange(input_data.shape[0]).reshape(-1, 1)
-                input_data = np.hstack((input_data, index_array))
-                
-                # 데이터 형변환
-                input_data = input_data.astype(np.float32)
-                
-                input_data = np.array([input_data])
+                input_data = preprocessing(input_data)
                 
                 prediction = model7.predict(input_data)
                 
@@ -609,19 +560,8 @@ class MovenetMPOpenvino:
             if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 140:
                 input_data = self.temp_array_dict[body.track_id].copy()
                 
-                # 패딩 추가
-                padding = np.zeros((610 - input_data.shape[0], 27))
-                input_data = np.vstack((input_data, padding))
+                input_data = preprocessing(input_data)
                 
-                # 마지막 열에 인덱스 추가
-                index_array = np.arange(input_data.shape[0]).reshape(-1, 1)
-                input_data = np.hstack((input_data, index_array))
-                
-                # 데이터 형변환
-                input_data = input_data.astype(np.float32)
-                
-                
-                input_data = np.array([input_data])
                 prediction = model8.predict(input_data)
                 
                 if np.argmax(prediction) == 0:
@@ -645,18 +585,8 @@ class MovenetMPOpenvino:
                 input_data = np.array(input_data)
                 input_data = input_data.astype(np.float32)
                 
-                # 패딩 추가
-                padding = np.zeros((610 - input_data.shape[0], 27))
-                input_data = np.vstack((input_data, padding))
+                input_data = preprocessing(input_data)
                 
-                # 마지막 열에 인덱스 추가
-                index_array = np.arange(input_data.shape[0]).reshape(-1, 1)
-                input_data = np.hstack((input_data, index_array))
-                
-                # 데이터 형변환
-                input_data = input_data.astype(np.float32)
-                
-                input_data = np.array([input_data])
                 prediction = model9.predict(input_data)
                 
                 if np.argmax(prediction) == 0:
@@ -666,12 +596,12 @@ class MovenetMPOpenvino:
                     
                     if self.vio_time is None:
                         self.vio_time = now_time
-                        data = [len(bodies), now_time, 9]
+                        data = [len(bodies), now_time]
                         insert_vio(data)
                     elif self.vio_time != 0:
                         if (now_time - self.vio_time).seconds >= 30:
                             self.vio_time = now_time
-                            data = [len(bodies), now_time, 9]
+                            data = [len(bodies), now_time]
                             insert_vio(data)
 
 

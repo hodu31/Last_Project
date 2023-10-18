@@ -112,8 +112,8 @@ def insert_vio(data):
 
     # 데이터를 삽입하는 SQL 쿼리 작성
     insert_query = ("INSERT INTO VIOLENCE "
-                    "( LEN_PEOPLE,  VIO_TIME ) "
-                    "VALUES (%s, %s)")
+                    "( LEN_PEOPLE,  VIO_TIME, DAN_CODE ) "
+                    "VALUES (%s, %s, %s)")
 
     # 데이터 삽입
     cursor.execute(insert_query, tuple(data))
