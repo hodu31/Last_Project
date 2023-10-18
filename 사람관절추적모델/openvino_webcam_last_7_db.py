@@ -15,10 +15,14 @@ import mysql.connector
 from db_connect import insert_db_data
 from db_connect import insert_visit
 
-model1 = load_model('C:/Last_Project/사람관절추적모델/pred_model/smoke.h5')
-model2 = load_model('C:/Last_Project/사람관절추적모델/pred_model/buyRefund.h5')
-model3 = load_model('C:/Last_Project/사람관절추적모델/pred_model/compar.h5')
+model1 = load_model('C:/Last_Project/사람관절추적모델/pred_model/buyRefund.h5')
+model2 = load_model('C:/Last_Project/사람관절추적모델/pred_model/compare')
+model3 = load_model('C:/Last_Project/사람관절추적모델/pred_model/fire.h5')
 model4 = load_model('C:/Last_Project/사람관절추적모델/pred_model/jeon.h5')
+model4 = load_model('C:/Last_Project/사람관절추적모델/pred_model/select.h5')
+model4 = load_model('C:/Last_Project/사람관절추적모델/pred_model/smoke.h5')
+model4 = load_model('C:/Last_Project/사람관절추적모델/pred_model/theft.h5')
+model4 = load_model('C:/Last_Project/사람관절추적모델/pred_model/yugi.h5')
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 DEFAULT_MODEL = SCRIPT_DIR / "models/movenet_multipose_lightning_256x256_FP32.xml"
