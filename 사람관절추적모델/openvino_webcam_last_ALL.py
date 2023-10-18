@@ -15,10 +15,16 @@ import mysql.connector
 from db_connect import insert_db_data
 from db_connect import insert_visit
 
-model1 = load_model('C:/Last_Project/사람관절추적모델/pred_model/smoke.h5')
-model2 = load_model('C:/Last_Project/사람관절추적모델/pred_model/buyRefund.h5')
-model3 = load_model('C:/Last_Project/사람관절추적모델/pred_model/compar.h5')
+
+model1 = load_model('C:/Last_Project/사람관절추적모델/pred_model/buyRefund.h5')
+model2 = load_model('C:/Last_Project/사람관절추적모델/pred_model/compare.h5')
+model3 = load_model('C:/Last_Project/사람관절추적모델/pred_model/fire.h5')
 model4 = load_model('C:/Last_Project/사람관절추적모델/pred_model/jeon.h5')
+model5 = load_model('C:/Last_Project/사람관절추적모델/pred_model/select.h5')
+model6 = load_model('C:/Last_Project/사람관절추적모델/pred_model/smoke.h5')
+model7 = load_model('C:/Last_Project/사람관절추적모델/pred_model/theft.h5')
+model8 = load_model('C:/Last_Project/사람관절추적모델/pred_model/yugi.h5')
+
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 DEFAULT_MODEL = SCRIPT_DIR / "models/movenet_multipose_lightning_256x256_FP32.xml"
@@ -319,15 +325,16 @@ class MovenetMPOpenvino:
                 self.temp_array_dict[body.track_id] = np.array([])
                 
             if body.track_id not in self.predicted_label and len(self.temp_array_dict[body.track_id]) >= 200:
-                self.predicted_label[body.track_id] = [[], [], []]
+                self.predicted_label[body.track_id] = [[], [], [], [], [], [], [], []]
                 
             if body.track_id not in self.time_data and len(self.temp_array_dict[body.track_id]) >= 200:
-                self.time_data[body.track_id] = [[], [], []]
+                self.time_data[body.track_id] = [[], [], [], [], [], [], [], []]
             
+
+################################################# 모델##############################################
             
-            
-            # 모델 돌리기
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 30 == 0:
+            # buy Refund
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 180 == 0:
                 input_data = self.temp_array_dict[body.track_id].copy()
 
                 # 패딩 추가
@@ -348,9 +355,237 @@ class MovenetMPOpenvino:
                 
                 
                 if np.argmax(prediction) == 0:
-                    self.predicted_label[body.track_id][0] = 'NO_smoke'
+                    self.predicted_label[body.track_id][0] = 'NO_buy'
                 elif np.argmax(prediction) == 1:
-                    self.predicted_label[body.track_id][0] = 'YES_smoke'
+                    self.predicted_label[body.track_id][0] = 'YES_buy'
+                    
+                    
+                    if len(self.time_data[body.track_id][0]) == 0:
+                        self.time_data[body.track_id][0] = [now_time]
+                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
+                        insert_db_data(data)
+                    elif len(self.time_data[body.track_id][0]) != 0:
+                        if (now_time - self.time_data[body.track_id][0][0]).seconds >= 30:
+                            self.time_data[body.track_id][0] = [now_time]
+                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
+                            insert_db_data(data)
+                            
+                            
+            # compare
+            if len(self.temp_array_dict[body.track_id]) >= 200 and (self.frame_counter-20) % 180 == 0:
+                input_data = self.temp_array_dict[body.track_id].copy()
+
+                # 패딩 추가
+                padding = np.zeros((610 - input_data.shape[0], 27))
+                input_data = np.vstack((input_data, padding))
+                
+                # 마지막 열에 인덱스 추가
+                index_array = np.arange(input_data.shape[0]).reshape(-1, 1)
+                input_data = np.hstack((input_data, index_array))
+                
+                # 데이터 형변환
+                input_data = input_data.astype(np.float32)
+                
+                input_data = np.array([input_data])
+                
+                prediction = model2.predict(input_data)
+                
+                
+                
+                if np.argmax(prediction) == 0:
+                    self.predicted_label[body.track_id][1] = 'NO_compare'
+                elif np.argmax(prediction) == 1:
+                    self.predicted_label[body.track_id][1] = 'YES_compare'
+                    
+                    
+                    if len(self.time_data[body.track_id][0]) == 0:
+                        self.time_data[body.track_id][0] = [now_time]
+                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
+                        insert_db_data(data)
+                    elif len(self.time_data[body.track_id][0]) != 0:
+                        if (now_time - self.time_data[body.track_id][0][0]).seconds >= 30:
+                            self.time_data[body.track_id][0] = [now_time]
+                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
+                            insert_db_data(data)
+                            
+                            
+            # fire
+            if len(self.temp_array_dict[body.track_id]) >= 200 and (self.frame_counter-40) % 180 == 0:
+                input_data = self.temp_array_dict[body.track_id].copy()
+
+                # 패딩 추가
+                padding = np.zeros((610 - input_data.shape[0], 27))
+                input_data = np.vstack((input_data, padding))
+                
+                # 마지막 열에 인덱스 추가
+                index_array = np.arange(input_data.shape[0]).reshape(-1, 1)
+                input_data = np.hstack((input_data, index_array))
+                
+                # 데이터 형변환
+                input_data = input_data.astype(np.float32)
+                
+                input_data = np.array([input_data])
+                
+                prediction = model3.predict(input_data)
+                
+                
+                
+                if np.argmax(prediction) == 0:
+                    self.predicted_label[body.track_id][2] = 'NO_fire'
+                elif np.argmax(prediction) == 1:
+                    self.predicted_label[body.track_id][2] = 'YES_fire'
+                    
+                    
+                    if len(self.time_data[body.track_id][0]) == 0:
+                        self.time_data[body.track_id][0] = [now_time]
+                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
+                        insert_db_data(data)
+                    elif len(self.time_data[body.track_id][0]) != 0:
+                        if (now_time - self.time_data[body.track_id][0][0]).seconds >= 30:
+                            self.time_data[body.track_id][0] = [now_time]
+                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
+                            insert_db_data(data)
+                            
+                            
+            # jeon
+            if len(self.temp_array_dict[body.track_id]) >= 200 and (self.frame_counter-60) % 180 == 0:
+                input_data = self.temp_array_dict[body.track_id].copy()
+
+                # 패딩 추가
+                padding = np.zeros((610 - input_data.shape[0], 27))
+                input_data = np.vstack((input_data, padding))
+                
+                # 마지막 열에 인덱스 추가
+                index_array = np.arange(input_data.shape[0]).reshape(-1, 1)
+                input_data = np.hstack((input_data, index_array))
+                
+                # 데이터 형변환
+                input_data = input_data.astype(np.float32)
+                
+                input_data = np.array([input_data])
+                
+                prediction = model4.predict(input_data)
+                
+                
+                
+                if np.argmax(prediction) == 0:
+                    self.predicted_label[body.track_id][3] = 'NO_jeon'
+                elif np.argmax(prediction) == 1:
+                    self.predicted_label[body.track_id][3] = 'YES_jeon'
+                    
+                    
+                    if len(self.time_data[body.track_id][0]) == 0:
+                        self.time_data[body.track_id][0] = [now_time]
+                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
+                        insert_db_data(data)
+                    elif len(self.time_data[body.track_id][0]) != 0:
+                        if (now_time - self.time_data[body.track_id][0][0]).seconds >= 30:
+                            self.time_data[body.track_id][0] = [now_time]
+                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
+                            insert_db_data(data)
+                            
+                            
+            # select
+            if len(self.temp_array_dict[body.track_id]) >= 200 and (self.frame_counter-80) % 180 == 0:
+                input_data = self.temp_array_dict[body.track_id].copy()
+
+                # 패딩 추가
+                padding = np.zeros((610 - input_data.shape[0], 27))
+                input_data = np.vstack((input_data, padding))
+                
+                # 마지막 열에 인덱스 추가
+                index_array = np.arange(input_data.shape[0]).reshape(-1, 1)
+                input_data = np.hstack((input_data, index_array))
+                
+                # 데이터 형변환
+                input_data = input_data.astype(np.float32)
+                
+                input_data = np.array([input_data])
+                
+                prediction = model5.predict(input_data)
+                
+                
+                
+                if np.argmax(prediction) == 0:
+                    self.predicted_label[body.track_id][4] = 'NO_select'
+                elif np.argmax(prediction) == 1:
+                    self.predicted_label[body.track_id][4] = 'YES_select'
+                    
+                    
+                    if len(self.time_data[body.track_id][0]) == 0:
+                        self.time_data[body.track_id][0] = [now_time]
+                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
+                        insert_db_data(data)
+                    elif len(self.time_data[body.track_id][0]) != 0:
+                        if (now_time - self.time_data[body.track_id][0][0]).seconds >= 30:
+                            self.time_data[body.track_id][0] = [now_time]
+                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
+                            insert_db_data(data)
+                            
+                            
+            # smoke
+            if len(self.temp_array_dict[body.track_id]) >= 200 and (self.frame_counter-100) % 180 == 0:
+                input_data = self.temp_array_dict[body.track_id].copy()
+
+                # 패딩 추가
+                padding = np.zeros((610 - input_data.shape[0], 27))
+                input_data = np.vstack((input_data, padding))
+                
+                # 마지막 열에 인덱스 추가
+                index_array = np.arange(input_data.shape[0]).reshape(-1, 1)
+                input_data = np.hstack((input_data, index_array))
+                
+                # 데이터 형변환
+                input_data = input_data.astype(np.float32)
+                
+                input_data = np.array([input_data])
+                
+                prediction = model6.predict(input_data)
+                
+                
+                
+                if np.argmax(prediction) == 0:
+                    self.predicted_label[body.track_id][5] = 'NO_smoke'
+                elif np.argmax(prediction) == 1:
+                    self.predicted_label[body.track_id][5] = 'YES_smoke'
+                    
+                    
+                    if len(self.time_data[body.track_id][0]) == 0:
+                        self.time_data[body.track_id][0] = [now_time]
+                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
+                        insert_db_data(data)
+                    elif len(self.time_data[body.track_id][0]) != 0:
+                        if (now_time - self.time_data[body.track_id][0][0]).seconds >= 30:
+                            self.time_data[body.track_id][0] = [now_time]
+                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
+                            insert_db_data(data)
+                            
+                            
+            # theft
+            if len(self.temp_array_dict[body.track_id]) >= 200 and (self.frame_counter-120) % 180 == 0:
+                input_data = self.temp_array_dict[body.track_id].copy()
+
+                # 패딩 추가
+                padding = np.zeros((610 - input_data.shape[0], 27))
+                input_data = np.vstack((input_data, padding))
+                
+                # 마지막 열에 인덱스 추가
+                index_array = np.arange(input_data.shape[0]).reshape(-1, 1)
+                input_data = np.hstack((input_data, index_array))
+                
+                # 데이터 형변환
+                input_data = input_data.astype(np.float32)
+                
+                input_data = np.array([input_data])
+                
+                prediction = model7.predict(input_data)
+                
+                
+                
+                if np.argmax(prediction) == 0:
+                    self.predicted_label[body.track_id][6] = 'NO_theft'
+                elif np.argmax(prediction) == 1:
+                    self.predicted_label[body.track_id][6] = 'YES_theft'
                     
                     
                     if len(self.time_data[body.track_id][0]) == 0:
@@ -365,8 +600,8 @@ class MovenetMPOpenvino:
                         
                     
             
-             # 모델 돌리기
-            if len(self.temp_array_dict[body.track_id]) >= 200 and (self.frame_counter - 10) % 30 == 0:
+             # yugi
+            if len(self.temp_array_dict[body.track_id]) >= 200 and (self.frame_counter-140) % 180 == 0:
                 input_data = self.temp_array_dict[body.track_id].copy()
                 
                 # 패딩 추가
@@ -382,12 +617,12 @@ class MovenetMPOpenvino:
                 
                 
                 input_data = np.array([input_data])
-                prediction = model3.predict(input_data)
+                prediction = model8.predict(input_data)
                 
                 if np.argmax(prediction) == 0:
-                    self.predicted_label[body.track_id][1] = 'NO_compare'
+                    self.predicted_label[body.track_id][7] = 'NO_yugi'
                 elif np.argmax(prediction) == 1:
-                    self.predicted_label[body.track_id][1] = 'YES_compare' 
+                    self.predicted_label[body.track_id][7] = 'YES_yugi' 
                     
                     if len(self.time_data[body.track_id][1]) == 0:
                         self.time_data[body.track_id][1] = [now_time]
@@ -399,48 +634,18 @@ class MovenetMPOpenvino:
                             data = [self.user_id ,self.shop_id, body.track_id, now_time, 2]
                             insert_db_data(data)
                         
-                        
-                
-                
-            # 모델 돌리기
-            if len(self.temp_array_dict[body.track_id]) >= 200 and (self.frame_counter - 20) % 30 == 0:
-                input_data = self.temp_array_dict[body.track_id].copy()
-                
-                # 패딩 추가
-                padding = np.zeros((610 - input_data.shape[0], 27))
-                input_data = np.vstack((input_data, padding))
-                
-                # 마지막 열에 인덱스 추가
-                index_array = np.arange(input_data.shape[0]).reshape(-1, 1)
-                input_data = np.hstack((input_data, index_array))
-                
-                # 데이터 형변환
-                input_data = input_data.astype(np.float32)
-                
-                input_data = np.array([input_data])
-                prediction = model4.predict(input_data)
-                
-                if np.argmax(prediction) == 0:
-                    self.predicted_label[body.track_id][2] = 'NO_jeon'
-                elif np.argmax(prediction) == 1:
-                    self.predicted_label[body.track_id][2] = 'YES_jeon'
-                    
-                    if len(self.time_data[body.track_id][2]) == 0:
-                        self.time_data[body.track_id][2] = [now_time]
-                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 3]
-                        insert_db_data(data)
-                    elif len(self.time_data[body.track_id][2]) != 0 :
-                        if (now_time - self.time_data[body.track_id][2][0]).seconds >= 10:
-                            self.time_data[body.track_id][2] = [now_time]
-                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 3]
-                            insert_db_data(data)
 
 
 
             if self.predicted_label is not None and body.track_id in self.predicted_label:
                 text_position_1 = (body.xmin, body.ymin+30)
-                cv2.putText(frame, "pred:{}".format(self.predicted_label[body.track_id]), text_position_1, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
-            
+                text_position_2 = (body.xmin, body.ymin+60)
+                text_position_3 = (body.xmin, body.ymin+90)
+                text_position_4 = (body.xmin, body.ymin+120)
+                cv2.putText(frame, "pred:{}".format(self.predicted_label[body.track_id][0:2]), text_position_1, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
+                cv2.putText(frame, "pred:{}".format(self.predicted_label[body.track_id][2:4]), text_position_2, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
+                cv2.putText(frame, "pred:{}".format(self.predicted_label[body.track_id][4:6]), text_position_3, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
+                cv2.putText(frame, "pred:{}".format(self.predicted_label[body.track_id][6:8]), text_position_4, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
                 
     def save_to_array(self, bodies):
         if not hasattr(self, 'temp_array_dict'):
