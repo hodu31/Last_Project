@@ -104,6 +104,7 @@ class Body:
 # w (resp. h): horizontal (resp. vertical) padding on the source image to make its ratio same as Movenet model input. 
 #               The padding is done on one side (bottom or right) of the image.
 # padded_w (resp. padded_h): width (resp. height) of the image after padding
+#Padding= (0, 840, 1920, 1920)
 Padding = namedtuple('Padding', ['w', 'h', 'padded_w',  'padded_h'])
 
 class MovenetMPOpenvino:
@@ -148,7 +149,7 @@ class MovenetMPOpenvino:
             self.input_type = "video"
             if input_src.isdigit(): 
                 input_type = "webcam"
-                input_src = int(input_src) #2
+                input_src = 2 #int(input_src)
             self.cap = cv2.VideoCapture(input_src)
             self.video_fps = int(self.cap.get(cv2.CAP_PROP_FPS))
             self.img_w = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -317,20 +318,12 @@ class MovenetMPOpenvino:
             now_time = datetime.now()
             now_time = now_time.replace(microsecond=0)
             
-            # 방문객 입장시간 넣기
-            if body.track_id not in self.visited_tracks:
-                now = datetime.now()
-                now = now.replace(microsecond=0)
-                data_1 = [self.user_id, self.shop_id, body.track_id, now]
-                insert_visit(data_1)
-                self.visited_tracks[body.track_id] = True  # 2. 코드 실행 후에 body.track_id를 visited_tracks에 추
-            
             
             if body.track_id not in self.temp_array_dict:
                 self.temp_array_dict[body.track_id] = np.array([])
                 
             if body.track_id not in self.predicted_label and len(self.temp_array_dict[body.track_id]) >= 200:
-                self.predicted_label[body.track_id] = [[], [], [], [], [], [], [], []]
+                self.predicted_label[body.track_id] = [None, None, None, None, None, None, None, None]
                 
             if body.track_id not in self.time_data and len(self.temp_array_dict[body.track_id]) >= 200:
                 self.time_data[body.track_id] = [[], [], [], [], [], [], [], []]
@@ -364,17 +357,6 @@ class MovenetMPOpenvino:
                 elif np.argmax(prediction) == 1:
                     self.predicted_label[body.track_id][0] = 'YES_buy'
                     
-                    
-                    if len(self.time_data[body.track_id][0]) == 0:
-                        self.time_data[body.track_id][0] = [now_time]
-                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
-                        insert_db_data(data)
-                    elif len(self.time_data[body.track_id][0]) != 0:
-                        if (now_time - self.time_data[body.track_id][0][0]).seconds >= 30:
-                            self.time_data[body.track_id][0] = [now_time]
-                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
-                            insert_db_data(data)
-                            
                             
             # compare
             if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 20:
@@ -402,17 +384,6 @@ class MovenetMPOpenvino:
                 elif np.argmax(prediction) == 1:
                     self.predicted_label[body.track_id][1] = 'YES_compare'
                     
-                    
-                    if len(self.time_data[body.track_id][1]) == 0:
-                        self.time_data[body.track_id][1] = [now_time]
-                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 2]
-                        insert_db_data(data)
-                    elif len(self.time_data[body.track_id][1]) != 0:
-                        if (now_time - self.time_data[body.track_id][1][0]).seconds >= 30:
-                            self.time_data[body.track_id][1] = [now_time]
-                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 2]
-                            insert_db_data(data)
-                            
                             
             # fire
             if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 40:
@@ -441,17 +412,6 @@ class MovenetMPOpenvino:
                     self.predicted_label[body.track_id][2] = 'YES_fire'
                     
                     
-                    if len(self.time_data[body.track_id][2]) == 0:
-                        self.time_data[body.track_id][2] = [now_time]
-                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 3]
-                        insert_db_data(data)
-                    elif len(self.time_data[body.track_id][2]) != 0:
-                        if (now_time - self.time_data[body.track_id][2][0]).seconds >= 30:
-                            self.time_data[body.track_id][2] = [now_time]
-                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 3]
-                            insert_db_data(data)
-                            
-                            
             # jeon
             if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 60:
                 input_data = self.temp_array_dict[body.track_id].copy()
@@ -478,17 +438,6 @@ class MovenetMPOpenvino:
                 elif np.argmax(prediction) == 1:
                     self.predicted_label[body.track_id][3] = 'YES_jeon'
                     
-                    
-                    if len(self.time_data[body.track_id][3]) == 0:
-                        self.time_data[body.track_id][3] = [now_time]
-                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 4]
-                        insert_db_data(data)
-                    elif len(self.time_data[body.track_id][3]) != 0:
-                        if (now_time - self.time_data[body.track_id][3][0]).seconds >= 30:
-                            self.time_data[body.track_id][3] = [now_time]
-                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 4]
-                            insert_db_data(data)
-                            
                             
             # select
             if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 80:
@@ -517,17 +466,6 @@ class MovenetMPOpenvino:
                     self.predicted_label[body.track_id][4] = 'YES_select'
                     
                     
-                    if len(self.time_data[body.track_id][4]) == 0:
-                        self.time_data[body.track_id][4] = [now_time]
-                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 5]
-                        insert_db_data(data)
-                    elif len(self.time_data[body.track_id][4]) != 0:
-                        if (now_time - self.time_data[body.track_id][4][0]).seconds >= 30:
-                            self.time_data[body.track_id][4] = [now_time]
-                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 5]
-                            insert_db_data(data)
-                            
-                            
             # smoke
             if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 100:
                 input_data = self.temp_array_dict[body.track_id].copy()
@@ -554,18 +492,6 @@ class MovenetMPOpenvino:
                 elif np.argmax(prediction) == 1:
                     self.predicted_label[body.track_id][5] = 'YES_smoke'
                     
-                    
-                    if len(self.time_data[body.track_id][5]) == 0:
-                        self.time_data[body.track_id][5] = [now_time]
-                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 6]
-                        insert_db_data(data)
-                    elif len(self.time_data[body.track_id][5]) != 0:
-                        if (now_time - self.time_data[body.track_id][5][0]).seconds >= 30:
-                            self.time_data[body.track_id][5] = [now_time]
-                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 6]
-                            insert_db_data(data)
-                            
-                            
             # theft
             if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 120:
                 input_data = self.temp_array_dict[body.track_id].copy()
@@ -593,17 +519,6 @@ class MovenetMPOpenvino:
                     self.predicted_label[body.track_id][6] = 'YES_theft'
                     
                     
-                    if len(self.time_data[body.track_id][6]) == 0:
-                        self.time_data[body.track_id][6] = [now_time]
-                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 7]
-                        insert_db_data(data)
-                    elif len(self.time_data[body.track_id][6]) != 0:
-                        if (now_time - self.time_data[body.track_id][6][0]).seconds >= 30:
-                            self.time_data[body.track_id][6] = [now_time]
-                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 7]
-                            insert_db_data(data)
-                        
-                    
             
              # yugi
             if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 140:
@@ -629,16 +544,7 @@ class MovenetMPOpenvino:
                 elif np.argmax(prediction) == 1:
                     self.predicted_label[body.track_id][7] = 'YES_yugi' 
                     
-                    if len(self.time_data[body.track_id][7]) == 0:
-                        self.time_data[body.track_id][7] = [now_time]
-                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 8]
-                        insert_db_data(data)
-                    elif len(self.time_data[body.track_id][7]) != 0:
-                        if (now_time - self.time_data[body.track_id][7][0]).seconds >= 30:
-                            self.time_data[body.track_id][7] = [now_time]
-                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 8]
-                            insert_db_data(data)
-                            
+                    
             #violence
             if len(self.array_list) >= 200 and self.frame_counter % 160 == 150:
                 input_data = self.array_list.copy()
@@ -664,31 +570,20 @@ class MovenetMPOpenvino:
                 elif np.argmax(prediction) == 1:
                     self.predict_violence = 'YES_violence'
                     
-                    if self.vio_time is None:
-                        self.vio_time = now_time
-                        data = [len(bodies), now_time, 9]
-                        insert_vio(data)
-                    elif self.vio_time != 0:
-                        if (now_time - self.vio_time).seconds >= 30:
-                            self.vio_time = now_time
-                            data = [len(bodies), now_time, 9]
-                            insert_vio(data)
-
-
 
             if self.predicted_label is not None and body.track_id in self.predicted_label:
                 text_position_1 = (body.xmin, body.ymin+30)
                 text_position_2 = (body.xmin, body.ymin+60)
                 text_position_3 = (body.xmin, body.ymin+90)
                 text_position_4 = (body.xmin, body.ymin+120)
-                cv2.putText(frame, "{}".format(self.predicted_label[body.track_id][0:2]), text_position_1, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
-                cv2.putText(frame, "{}".format(self.predicted_label[body.track_id][2:4]), text_position_2, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
-                cv2.putText(frame, "{}".format(self.predicted_label[body.track_id][4:6]), text_position_3, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
-                cv2.putText(frame, "{}".format(self.predicted_label[body.track_id][6:8]), text_position_4, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
+                cv2.putText(frame, "{},{}".format(self.predicted_label[body.track_id][3],self.predicted_label[body.track_id][5]), text_position_1, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
+                # cv2.putText(frame, "{}".format(self.predicted_label[body.track_id][2:4]), text_position_2, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
+                # cv2.putText(frame, "{}".format(self.predicted_label[body.track_id][4:6]), text_position_3, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
+                # cv2.putText(frame, "{}".format(self.predicted_label[body.track_id][6:8]), text_position_4, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
                 
-            if self.predict_violence is not None:
-                text_position_5 = (body.xmin, body.ymin+160)
-                cv2.putText(frame, "{}".format(self.predict_violence), text_position_5, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
+            # if self.predict_violence is not None:
+            #     text_position_5 = (body.xmin, body.ymin+160)
+            #     cv2.putText(frame, "{}".format(self.predict_violence), text_position_5, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
                 
     def save_to_array(self, bodies):
         if not hasattr(self, 'temp_array_dict'):
@@ -739,10 +634,10 @@ class MovenetMPOpenvino:
             self.array_list = []
 
         for body in bodies:
-            head_position = compute_head_position(body.keypoints)
-            
             if len(self.array_list) >= 200:
                 self.array_list = self.array_list[1:]
+            
+            head_position = compute_head_position(body.keypoints)
             
             if head_position:
                 body.keypoints[KEYPOINT_DICT['head']] = head_position
