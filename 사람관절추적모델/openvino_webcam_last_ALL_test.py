@@ -693,8 +693,8 @@ class MovenetMPOpenvino:
             nb_pd_inferences += 1
             
             # 2프레임 마다 저장
-            if self.frame_counter % 2 == 0:  # 2프레임마다 조건을 확인
-                self.save_to_array(bodies)
+            #if self.frame_counter % 2 == 0:  # 2프레임마다 조건을 확인
+            self.save_to_array(bodies)
                 
             self.save_vio(bodies)
 

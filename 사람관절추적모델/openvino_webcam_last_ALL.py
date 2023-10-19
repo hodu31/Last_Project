@@ -330,7 +330,7 @@ class MovenetMPOpenvino:
                 self.temp_array_dict[body.track_id] = np.array([])
                 
             if body.track_id not in self.predicted_label and len(self.temp_array_dict[body.track_id]) >= 200:
-                self.predicted_label[body.track_id] = [[], [], [], [], [], [], [], []]
+                self.predicted_label[body.track_id] = [None, None, None, None, None, None, None, None]
                 
             if body.track_id not in self.time_data and len(self.temp_array_dict[body.track_id]) >= 200:
                 self.time_data[body.track_id] = [[], [], [], [], [], [], [], []]
@@ -799,8 +799,8 @@ class MovenetMPOpenvino:
             nb_pd_inferences += 1
             
             # 2프레임 마다 저장
-            if self.frame_counter % 2 == 0:  # 2프레임마다 조건을 확인
-                self.save_to_array(bodies)
+            #if self.frame_counter % 2 == 0:  # 2프레임마다 조건을 확인
+            self.save_to_array(bodies)
                 
             self.save_vio(bodies)
 

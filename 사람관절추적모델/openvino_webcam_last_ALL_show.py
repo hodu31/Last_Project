@@ -149,7 +149,7 @@ class MovenetMPOpenvino:
             self.input_type = "video"
             if input_src.isdigit(): 
                 input_type = "webcam"
-                input_src = 2 #int(input_src)
+                input_src = int(input_src)
             self.cap = cv2.VideoCapture(input_src)
             self.video_fps = int(self.cap.get(cv2.CAP_PROP_FPS))
             self.img_w = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -694,8 +694,8 @@ class MovenetMPOpenvino:
             nb_pd_inferences += 1
             
             # 2프레임 마다 저장
-            if self.frame_counter % 2 == 0:  # 2프레임마다 조건을 확인
-                self.save_to_array(bodies)
+            #if self.frame_counter % 2 == 0:  # 2프레임마다 조건을 확인
+            self.save_to_array(bodies)
                 
             self.save_vio(bodies)
 
