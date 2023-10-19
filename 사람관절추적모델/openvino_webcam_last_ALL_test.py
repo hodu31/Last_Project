@@ -148,7 +148,7 @@ class MovenetMPOpenvino:
             self.input_type = "video"
             if input_src.isdigit(): 
                 input_type = "webcam"
-                input_src = 2 #int(input_src)
+                input_src = int(input_src) #2
             self.cap = cv2.VideoCapture(input_src)
             self.video_fps = int(self.cap.get(cv2.CAP_PROP_FPS))
             self.img_w = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -321,17 +321,17 @@ class MovenetMPOpenvino:
             if body.track_id not in self.temp_array_dict:
                 self.temp_array_dict[body.track_id] = np.array([])
                 
-            if body.track_id not in self.predicted_label and len(self.temp_array_dict[body.track_id]) >= 200:
+            if body.track_id not in self.predicted_label and len(self.temp_array_dict[body.track_id]) >= 300:
                 self.predicted_label[body.track_id] = [[], [], [], [], [], [], [], []]
                 
-            if body.track_id not in self.time_data and len(self.temp_array_dict[body.track_id]) >= 200:
+            if body.track_id not in self.time_data and len(self.temp_array_dict[body.track_id]) >= 300:
                 self.time_data[body.track_id] = [[], [], [], [], [], [], [], []]
             
 
 ################################################# 모델##############################################
             
             # buy Refund
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 0:
+            if len(self.temp_array_dict[body.track_id]) >= 300 and self.frame_counter % 160 == 0:
                 input_data = self.temp_array_dict[body.track_id].copy()
 
                 # 패딩 추가
@@ -358,7 +358,7 @@ class MovenetMPOpenvino:
                     
                             
             # compare
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 20:
+            if len(self.temp_array_dict[body.track_id]) >= 300 and self.frame_counter % 160 == 20:
                 input_data = self.temp_array_dict[body.track_id].copy()
 
                 # 패딩 추가
@@ -385,7 +385,7 @@ class MovenetMPOpenvino:
                     
                             
             # fire
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 40:
+            if len(self.temp_array_dict[body.track_id]) >= 300 and self.frame_counter % 160 == 40:
                 input_data = self.temp_array_dict[body.track_id].copy()
 
                 # 패딩 추가
@@ -412,7 +412,7 @@ class MovenetMPOpenvino:
                     
                     
             # jeon
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 60:
+            if len(self.temp_array_dict[body.track_id]) >= 300 and self.frame_counter % 160 == 60:
                 input_data = self.temp_array_dict[body.track_id].copy()
 
                 # 패딩 추가
@@ -439,7 +439,7 @@ class MovenetMPOpenvino:
                     
                             
             # select
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 80:
+            if len(self.temp_array_dict[body.track_id]) >= 300 and self.frame_counter % 160 == 80:
                 input_data = self.temp_array_dict[body.track_id].copy()
 
                 # 패딩 추가
@@ -466,7 +466,7 @@ class MovenetMPOpenvino:
                     
                     
             # smoke
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 100:
+            if len(self.temp_array_dict[body.track_id]) >= 300 and self.frame_counter % 160 == 100:
                 input_data = self.temp_array_dict[body.track_id].copy()
 
                 # 패딩 추가
@@ -492,7 +492,7 @@ class MovenetMPOpenvino:
                     self.predicted_label[body.track_id][5] = 'YES_smoke'
                     
             # theft
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 120:
+            if len(self.temp_array_dict[body.track_id]) >= 300 and self.frame_counter % 160 == 120:
                 input_data = self.temp_array_dict[body.track_id].copy()
 
                 # 패딩 추가
@@ -520,7 +520,7 @@ class MovenetMPOpenvino:
                     
             
              # yugi
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 140:
+            if len(self.temp_array_dict[body.track_id]) >= 300 and self.frame_counter % 160 == 140:
                 input_data = self.temp_array_dict[body.track_id].copy()
                 
                 # 패딩 추가
@@ -545,7 +545,7 @@ class MovenetMPOpenvino:
                     
                     
             #violence
-            if len(self.array_list) >= 200 and self.frame_counter % 160 == 150:
+            if len(self.array_list) >= 300 and self.frame_counter % 160 == 150 and len(bodies) >= 2:
                 input_data = self.array_list.copy()
                 input_data = np.array(input_data)
                 input_data = input_data.astype(np.float32)
@@ -590,7 +590,7 @@ class MovenetMPOpenvino:
 
         for body in bodies:
             ### 610 보다 크면 앞에 부분 자르기 
-            if len(self.temp_array_dict[body.track_id]) >= 200:
+            if len(self.temp_array_dict[body.track_id]) >= 300:
                 self.temp_array_dict[body.track_id] = self.temp_array_dict[body.track_id][1:]
                 
             head_position = compute_head_position(body.keypoints)
@@ -633,7 +633,7 @@ class MovenetMPOpenvino:
             self.array_list = []
 
         for body in bodies:
-            if len(self.array_list) >= 200:
+            if len(self.array_list) >= 300:
                 self.array_list = self.array_list[1:]
             
             head_position = compute_head_position(body.keypoints)
