@@ -90,7 +90,7 @@ class MovenetMPOpenvino:
                 xml=DEFAULT_MODEL, 
                 device="CPU",
                 tracking="oks",
-                score_thresh=0.25,
+                score_thresh=0.3,
                 output=None,
                 csv_output=None):  # <-- Added CSV output parameter
         
@@ -362,7 +362,7 @@ if __name__ == "__main__":
     #                     help="Target device to run the model (default=%(default)s)") 
     parser.add_argument("-t", "--tracking", choices=["iou", "oks"], default = "oks",
                         help="Enable tracking and specify method")
-    parser.add_argument("-s", "--score_threshold", default=0.25, type=float,
+    parser.add_argument("-s", "--score_threshold", default=0.3, type=float,
                         help="Confidence score (default=%(default)f)")                     
     parser.add_argument("-o","--output",
                         help="Path to output video file")
