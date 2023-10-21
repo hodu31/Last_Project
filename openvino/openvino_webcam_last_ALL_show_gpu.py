@@ -17,7 +17,7 @@ from datetime import datetime
 # from db_connect import insert_vio
 
 
-model1 = load_model('C:/Last_Project/사람관절추적모델/pred_model/smoke.h5')
+model1 = load_model('C:/Last_Project/openvino/pred_model/smoke.h5')
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -365,10 +365,8 @@ class MovenetMPOpenvino:
             
             COLUMN_ORDER = [
                 'left_shoulder', 'left_elbow', 'left_wrist',
-                'right_shoulder', 'right_elbow', 'right_wrist',
-                'left_hip', 'left_knee', 'left_ankle',
-                'right_hip', 'right_knee', 'right_ankle',
-                'head']
+                'right_shoulder', 'right_elbow', 'right_wrist'
+                ]
 
             for column in COLUMN_ORDER:
                 joint_index = KEYPOINT_DICT[column.lower()]
