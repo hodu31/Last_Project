@@ -17,15 +17,15 @@ from datetime import datetime
 # from db_connect import insert_vio
 
 
-model1 = load_model('C:/Last_Project/사람관절추적모델/pred_model/buyRefund.h5')
-model2 = load_model('C:/Last_Project/사람관절추적모델/pred_model/compare.h5')
-model3 = load_model('C:/Last_Project/사람관절추적모델/pred_model/fire.h5')
-model4 = load_model('C:/Last_Project/사람관절추적모델/pred_model/jeon.h5')
-model5 = load_model('C:/Last_Project/사람관절추적모델/pred_model/select.h5')
-model6 = load_model('C:/Last_Project/사람관절추적모델/pred_model/smoke.h5')
-model7 = load_model('C:/Last_Project/사람관절추적모델/pred_model/theft.h5')
-model8 = load_model('C:/Last_Project/사람관절추적모델/pred_model/yugi.h5')
-model9 = load_model('C:/Last_Project/사람관절추적모델/pred_model/violence.h5')
+model1 = load_model('C:/Last_Project/openvino/pred_model/buyRefund.h5')
+model2 = load_model('C:/Last_Project/openvino/pred_model/compare.h5')
+model3 = load_model('C:/Last_Project/openvino/pred_model/fire.h5')
+model4 = load_model('C:/Last_Project/openvino/pred_model/jeon.h5')
+model5 = load_model('C:/Last_Project/openvino/pred_model/select.h5')
+model6 = load_model('C:/Last_Project/openvino/pred_model/smoke_new.h5')
+model7 = load_model('C:/Last_Project/openvino/pred_model/theft.h5')
+model8 = load_model('C:/Last_Project/openvino/pred_model/yugi.h5')
+model9 = load_model('C:/Last_Project/openvino/pred_model/violence.h5')
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -249,7 +249,7 @@ class MovenetMPOpenvino:
 ### 웹캠에 표시하는 부분
     def pd_render(self, frame, bodies):
         thickness = 3 
-        color_skeleton = (255, 230, 90)
+        color_skeleton = (255, 200, 90)
         color_box = (0,255,255)
         for body in bodies:
             if self.tracking:
@@ -322,18 +322,18 @@ class MovenetMPOpenvino:
             if body.track_id not in self.temp_array_dict:
                 self.temp_array_dict[body.track_id] = np.array([])
                 
-            if body.track_id not in self.predicted_label and len(self.temp_array_dict[body.track_id]) >= 230:
+            if body.track_id not in self.predicted_label and len(self.temp_array_dict[body.track_id]) >= 200:
                 self.predicted_label[body.track_id] = [None, None, None]
                 
 
 ################################################# 모델##############################################
             
             # jeon
-            if len(self.temp_array_dict[body.track_id]) >= 230 and self.frame_counter % 30 == 0: 
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 30 == 0: 
                 input_data = self.temp_array_dict[body.track_id].copy()
 
                 # 패딩 추가
-                padding = np.zeros((610 - input_data.shape[0], 27))
+                padding = np.zeros((610 - input_data.shape[0], 14))
                 input_data = np.vstack((input_data, padding))
                 
                 # 마지막 열에 인덱스 추가
@@ -356,11 +356,11 @@ class MovenetMPOpenvino:
                     
                             
             # smoke
-            if len(self.temp_array_dict[body.track_id]) >= 230 and self.frame_counter % 30 == 10:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 30 == 10:
                 input_data = self.temp_array_dict[body.track_id].copy()
 
                 # 패딩 추가
-                padding = np.zeros((610 - input_data.shape[0], 27))
+                padding = np.zeros((610 - input_data.shape[0], 14))
                 input_data = np.vstack((input_data, padding))
                 
                 # 마지막 열에 인덱스 추가
@@ -383,13 +383,13 @@ class MovenetMPOpenvino:
                     
                     
             #violence
-            if len(self.array_list) >= 230 and self.frame_counter % 30 == 20:
+            if len(self.array_list) >= 200 and self.frame_counter % 30 == 20:
                 input_data = self.array_list.copy()
                 input_data = np.array(input_data)
                 input_data = input_data.astype(np.float32)
                 
                 # 패딩 추가
-                padding = np.zeros((610 - input_data.shape[0], 27))
+                padding = np.zeros((610 - input_data.shape[0], 14))
                 input_data = np.vstack((input_data, padding))
                 
                 # 마지막 열에 인덱스 추가
@@ -425,7 +425,7 @@ class MovenetMPOpenvino:
 
         for body in bodies:
             ### 610 보다 크면 앞에 부분 자르기 
-            if len(self.temp_array_dict[body.track_id]) >= 230:
+            if len(self.temp_array_dict[body.track_id]) >= 200:
                 self.temp_array_dict[body.track_id] = self.temp_array_dict[body.track_id][1:]
                 
             head_position = compute_head_position(body.keypoints)
@@ -437,10 +437,7 @@ class MovenetMPOpenvino:
             
             COLUMN_ORDER = [
                 'left_shoulder', 'left_elbow', 'left_wrist',
-                'right_shoulder', 'right_elbow', 'right_wrist',
-                'left_hip', 'left_knee', 'left_ankle',
-                'right_hip', 'right_knee', 'right_ankle',
-                'head']
+                'right_shoulder', 'right_elbow', 'right_wrist']
 
             for column in COLUMN_ORDER:
                 joint_index = KEYPOINT_DICT[column.lower()]
@@ -468,7 +465,7 @@ class MovenetMPOpenvino:
             self.array_list = []
 
         for body in bodies:
-            if len(self.array_list) >= 230:
+            if len(self.array_list) >= 200:
                 self.array_list = self.array_list[1:]
             
             head_position = compute_head_position(body.keypoints)
@@ -480,10 +477,7 @@ class MovenetMPOpenvino:
             
             COLUMN_ORDER = [
                 'left_shoulder', 'left_elbow', 'left_wrist',
-                'right_shoulder', 'right_elbow', 'right_wrist',
-                'left_hip', 'left_knee', 'left_ankle',
-                'right_hip', 'right_knee', 'right_ankle',
-                'head']
+                'right_shoulder', 'right_elbow', 'right_wrist']
 
             for column in COLUMN_ORDER:
                 joint_index = KEYPOINT_DICT[column.lower()]
@@ -536,7 +530,7 @@ class MovenetMPOpenvino:
             self.fps.update()               
 
             if self.show_fps:
-                self.fps.draw(frame, orig=(50,50), size=1, color=(240,230,100))
+                self.fps.draw(frame, orig=(50,50), size=1, color=(240,200,100))
             cv2.imshow("Movenet", frame)
 
             if self.output:
@@ -547,7 +541,7 @@ class MovenetMPOpenvino:
                     self.output.write(frame)
 
             key = cv2.waitKey(1) 
-            if key == ord('q') or key == 27:
+            if key == ord('q') or key == 14:
                 break
             elif key == 32:
                 # Pause on space bar
