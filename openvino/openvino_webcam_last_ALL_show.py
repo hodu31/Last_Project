@@ -48,7 +48,7 @@ KEYPOINT_DICT = {
     'left_hip': 11,
     'right_hip': 12,
     'left_knee': 13,
-    'right_knee': 14,
+    'right_knee': 13,
     'left_ankle': 15,
     'right_ankle': 16,
     'head': 17
@@ -76,7 +76,7 @@ def compute_head_position(keypoints):
 LINES_BODY = [[4,2],[2,0],[0,1],[1,3],
             [10,8],[8,6],[6,5],[5,7],[7,9],
             [6,12],[12,11],[11,5],
-            [12,14],[14,16],[11,13],[13,15]]
+            [12,13],[13,16],[11,13],[13,15]]
 
 class Body:
     def __init__(self, score, xmin, ymin, xmax, ymax, keypoints_score, keypoints, keypoints_norm):
@@ -328,39 +328,14 @@ class MovenetMPOpenvino:
 
 ################################################# 모델##############################################
             
-            # jeon
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 30 == 0: 
-                input_data = self.temp_array_dict[body.track_id].copy()
-
-                # 패딩 추가
-                padding = np.zeros((610 - input_data.shape[0], 14))
-                input_data = np.vstack((input_data, padding))
-                
-                # 마지막 열에 인덱스 추가
-                index_array = np.arange(input_data.shape[0]).reshape(-1, 1)
-                input_data = np.hstack((input_data, index_array))
-                
-                # 데이터 형변환
-                input_data = input_data.astype(np.float32)
-                
-                input_data = np.array([input_data])
-                
-                prediction = model4.predict(input_data)
-                
-                
-                
-                if np.argmax(prediction) == 0:
-                    self.predicted_label[body.track_id][0] = 'NO_jeon'
-                elif np.argmax(prediction) == 1:
-                    self.predicted_label[body.track_id][0] = 'YES_jeon'
-                    
+           
                             
             # smoke
             if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 30 == 10:
                 input_data = self.temp_array_dict[body.track_id].copy()
 
                 # 패딩 추가
-                padding = np.zeros((610 - input_data.shape[0], 14))
+                padding = np.zeros((610 - input_data.shape[0], 13))
                 input_data = np.vstack((input_data, padding))
                 
                 # 마지막 열에 인덱스 추가
@@ -377,48 +352,20 @@ class MovenetMPOpenvino:
                 
                 
                 if np.argmax(prediction) == 0:
-                    self.predicted_label[body.track_id][1] = 'NO_smoke'
+                    self.predicted_label[body.track_id][0] = 'NO_smoke'
                 elif np.argmax(prediction) == 1:
-                    self.predicted_label[body.track_id][1] = 'YES_smoke'
+                    self.predicted_label[body.track_id][0] = 'YES_smoke'
                     
-                    
-            #violence
-            if len(self.array_list) >= 200 and self.frame_counter % 30 == 20:
-                input_data = self.array_list.copy()
-                input_data = np.array(input_data)
-                input_data = input_data.astype(np.float32)
-                
-                # 패딩 추가
-                padding = np.zeros((610 - input_data.shape[0], 14))
-                input_data = np.vstack((input_data, padding))
-                
-                # 마지막 열에 인덱스 추가
-                index_array = np.arange(input_data.shape[0]).reshape(-1, 1)
-                input_data = np.hstack((input_data, index_array))
-                
-                # 데이터 형변환
-                input_data = input_data.astype(np.float32)
-                
-                input_data = np.array([input_data])
-                prediction = model9.predict(input_data)
-                
-                if np.argmax(prediction) == 0:
-                    self.predict_violence = 'NO_violence'
-                elif np.argmax(prediction) == 1:
-                    self.predict_violence = 'YES_violence'
-                    
+           
 
             if self.predicted_label is not None and body.track_id in self.predicted_label:
                 text_position_1 = (body.xmin, body.ymin+30)
-                cv2.putText(frame, "{},{}".format(self.predicted_label[body.track_id][0], self.predicted_label[body.track_id][1]), text_position_1, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
+                cv2.putText(frame, "{}".format(self.predicted_label[body.track_id][0]), text_position_1, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
                 # cv2.putText(frame, "{}".format(self.predicted_label[body.track_id][2:4]), text_position_2, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
                 # cv2.putText(frame, "{}".format(self.predicted_label[body.track_id][4:6]), text_position_3, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
                 # cv2.putText(frame, "{}".format(self.predicted_label[body.track_id][6:8]), text_position_4, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
                 
-            if self.predict_violence is not None:
-                text_position_5 = (body.xmin, body.ymin+60)
-                cv2.putText(frame, "{}".format(self.predict_violence), text_position_5, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
-                
+           
     def save_to_array(self, bodies):
         if not hasattr(self, 'temp_array_dict'):
             self.temp_array_dict = {}
@@ -460,36 +407,6 @@ class MovenetMPOpenvino:
             #     print(track_id, array)
             
     
-    def save_vio(self, bodies):
-        if not hasattr(self, 'array_list'):
-            self.array_list = []
-
-        for body in bodies:
-            if len(self.array_list) >= 200:
-                self.array_list = self.array_list[1:]
-            
-            head_position = compute_head_position(body.keypoints)
-            
-            if head_position:
-                body.keypoints[KEYPOINT_DICT['head']] = head_position
-                
-            data_row = [len(bodies)]
-            
-            COLUMN_ORDER = [
-                'left_shoulder', 'left_elbow', 'left_wrist',
-                'right_shoulder', 'right_elbow', 'right_wrist']
-
-            for column in COLUMN_ORDER:
-                joint_index = KEYPOINT_DICT[column.lower()]
-                data_row.extend([body.keypoints[joint_index][0], body.keypoints[joint_index][1]])
-                
-            self.array_list.append(data_row)
-            
-            # 데이터 확인하기 
-            
-            #print(self.array_list)
-    
-    
     
     def run(self):
 
@@ -525,7 +442,6 @@ class MovenetMPOpenvino:
             # if self.frame_counter % 5 == 0:  # 2프레임마다 조건을 확인
             self.save_to_array(bodies)
                 
-            self.save_vio(bodies)
 
             self.fps.update()               
 
@@ -541,7 +457,7 @@ class MovenetMPOpenvino:
                     self.output.write(frame)
 
             key = cv2.waitKey(1) 
-            if key == ord('q') or key == 14:
+            if key == ord('q') or key == 13:
                 break
             elif key == 32:
                 # Pause on space bar
