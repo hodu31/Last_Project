@@ -16,7 +16,8 @@ from datetime import datetime
 # from db_connect import insert_visit
 # from db_connect import insert_vio
 
-model1 = load_model('C:/Last_Project/openvino/pred_model/smoke_real.h5')
+
+model6 = load_model('C:/Last_Project/openvino/pred_model/smoke_good_ori.h5')
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -41,8 +42,24 @@ KEYPOINT_DICT = {
     'left_knee': 13,
     'right_knee': 14,
     'left_ankle': 15,
-    'right_ankle': 16
+    'right_ankle': 16,
+    'head': 17
 }
+
+
+def compute_head_position(keypoints):
+    relevant_keypoints = ['nose', 'left_eye', 'right_eye', 'left_ear', 'right_ear']
+    total_x, total_y, count = 0, 0, 0
+    for keypoint in relevant_keypoints:
+        idx = KEYPOINT_DICT[keypoint]
+        if keypoints[idx] is not None:
+            x, y = keypoints[idx]
+            total_x += x
+            total_y += y
+            count += 1
+    if count == 0:
+        return None
+    return (total_x / count, total_y / count)
 
 # LINES_BODY are used when drawing the skeleton onto the source image. 
 # Each variable is a list of continuous lines.
@@ -91,10 +108,11 @@ class MovenetMPOpenvino:
                 output=None):
         self.visited_tracks = {} 
         self.predicted_label = {}
-        self.time_data = {}
         self.db_data = []
         self.prev_keypoints = {}
+        self.prev_keypoints = {}
         self.temp_array_dict = {}
+        self.last_dict = {}
         self.array_list = []
         self.stop_frame_count_dict = {}
         self.stop_frame_count = 0
@@ -226,6 +244,14 @@ class MovenetMPOpenvino:
             if self.tracking:
                 color_skeleton = color_box = TRACK_COLORS[body.track_id % len(TRACK_COLORS)]
             
+            head_position = compute_head_position(body.keypoints)
+            if head_position:
+                x, y = head_position
+                if x is not None and y is not None:
+                    body.keypoints = np.vstack((body.keypoints, np.array([head_position])))
+                    assert len(body.keypoints) == 18, f"Expected 18 keypoints, but got {len(body.keypoints)}"
+                    cv2.circle(frame, (int(x), int(y)), 4, (255, 0, 255), -11)  # 보라색으로 'head' 표시    
+            
             
             # 사람의 포즈를 표시하기 위한 선을 그리는 부분
             lines = [np.array([body.keypoints[point] for point in line]) for line in LINES_BODY if body.keypoints_score[line[0]] > self.score_thresh and body.keypoints_score[line[1]] > self.score_thresh]
@@ -286,17 +312,20 @@ class MovenetMPOpenvino:
                 self.temp_array_dict[body.track_id] = np.array([])
                 
             if body.track_id not in self.predicted_label and len(self.temp_array_dict[body.track_id]) >= 200:
-                self.predicted_label[body.track_id] = [None, None, None]
+                self.predicted_label[body.track_id] = [None]
                 
 
-################################################# 모델##############################################
-                  
+################################################# 모델##############################################      
+                            
             # smoke
             if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 30 == 0:
                 input_data = self.temp_array_dict[body.track_id].copy()
-
+                
+                input_data = input_data[1:]
+                
                 # 패딩 추가
                 padding = np.zeros((610 - input_data.shape[0], input_data.shape[1]))
+                
                 input_data = np.vstack((input_data, padding))
                 
                 # 마지막 열에 인덱스 추가
@@ -308,7 +337,8 @@ class MovenetMPOpenvino:
                 
                 input_data = np.array([input_data])
                 
-                prediction = model1.predict(input_data)
+                
+                prediction = model6.predict(input_data)
                 
                 
                 
@@ -323,41 +353,61 @@ class MovenetMPOpenvino:
             if self.predicted_label is not None and body.track_id in self.predicted_label:
                 text_position_1 = (body.xmin, body.ymin+30)
                 cv2.putText(frame, "{}".format(self.predicted_label[body.track_id][0]), text_position_1, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
-               
+             
+    
+
+        
     def save_to_array(self, bodies):
         if not hasattr(self, 'temp_array_dict'):
             self.temp_array_dict = {}
+        if not hasattr(self, 'prev_joint_positions'):
+            self.prev_joint_positions = {}
 
         for body in bodies:
-            ### 610 보다 크면 앞에 부분 자르기 
-            if len(self.temp_array_dict[body.track_id]) >= 200:
-                self.temp_array_dict[body.track_id] = self.temp_array_dict[body.track_id][1:]
-                
-        
+            # ### 610 보다 크면 앞에 부분 자르기 
+            # if len(self.temp_array_dict[body.track_id]) >= 200:
+            #     self.temp_array_dict[body.track_id] = self.temp_array_dict[body.track_id][1:]
+            head_position = compute_head_position(body.keypoints)
+            
+            if head_position:
+                body.keypoints[KEYPOINT_DICT['head']] = head_position
+
             data_row = [len(bodies)]
+            COLUMN_ORDER = [
+                'left_shoulder', 'left_elbow', 'left_wrist',
+                'right_shoulder', 'right_elbow', 'right_wrist',
+                'left_hip', 'left_knee', 'left_ankle',
+                'right_hip', 'right_knee', 'right_ankle',
+                'head']
+
+            for column in COLUMN_ORDER:
+                joint_index = KEYPOINT_DICT[column.lower()]
+                data_row.extend([body.keypoints[joint_index][0], body.keypoints[joint_index][1]])
+
+            # Compute the difference between the current and previous joint positions
+            if body.track_id in self.prev_joint_positions:
+                data_row = np.array(data_row) - self.prev_joint_positions[body.track_id] 
             
-            for name ,column in KEYPOINT_DICT.items():
-                data_row.extend([body.keypoints[column][0], body.keypoints[column][1]])
-            
-                
-            
+            # Update the previous joint positions
+            self.prev_joint_positions[body.track_id] = np.array(data_row)
+
             if body.track_id not in self.temp_array_dict or len(self.temp_array_dict[body.track_id]) == 0:
-                # Initialize the track_id entry with the data_row if it doesn't exist
                 self.temp_array_dict[body.track_id] = np.array([data_row])
             else:
-                # Append the data_row to the existing track_id entry
                 self.temp_array_dict[body.track_id] = np.vstack((self.temp_array_dict[body.track_id], data_row))
-                
-             ### 형태 확인하기    
-            for track_id, array in self.temp_array_dict.items():
-                print(f"Shape for track_id {track_id}: {array.shape}")
             
-            # 데이터 확인하기 
-            for track_id, array in self.temp_array_dict.items():
-                print(track_id, array)
             
-    
-    
+            
+        # # 형태 확인하기    
+        # for track_id, array in self.temp_array_dict.items():
+        #     print(f"Shape for track_id {track_id}: {array.shape}")
+        
+        # # 데이터 확인하기 
+        #     for track_id, array in self.temp_array_dict.items():
+        #         print(track_id, array)    
+        
+        
+            
     def run(self):
 
         self.fps = FPS()
@@ -388,8 +438,8 @@ class MovenetMPOpenvino:
             self.pd_render(frame, bodies)
             nb_pd_inferences += 1
             
-            # 2프레임 마다 저장
-            # if self.frame_counter % 5 == 0:  # 2프레임마다 조건을 확인
+            # 10프레임 마다 저장
+            #if self.frame_counter % 10 == 0:  # 10프레임마다 조건을 확인
             self.save_to_array(bodies)
                 
             self.fps.update()               

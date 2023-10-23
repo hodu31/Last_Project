@@ -17,7 +17,7 @@ DEFAULT_MODEL = SCRIPT_DIR / "models/movenet_multipose_lightning_256x256_FP32.xm
 # Dictionary that maps from joint names to keypoint indices.
 KEYPOINT_DICT = {
     'nose': 0,
-    'left_eye': 1,
+    'left_eye': 1,      
     'right_eye': 2,
     'left_ear': 3,
     'right_ear': 4,
@@ -280,7 +280,7 @@ class MovenetMPOpenvino:
             nb_pd_inferences += 1
 
             # Save the results to CSV for the current frame
-            if self.csv_output:
+            if self.csv_output and frame_num % 10 == 0:
                 self.save_to_csv(bodies, self.csv_writer, frame_num)
             frame_num += 1
 

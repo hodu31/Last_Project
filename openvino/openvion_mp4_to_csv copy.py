@@ -265,7 +265,7 @@ class MovenetMPOpenvino:
             nb_pd_inferences += 1
 
             # Save the results to CSV for the current frame
-            if self.csv_output:
+            if self.csv_output and frame_num % 10 == 0:
                 self.save_to_csv(bodies, self.csv_writer, frame_num)
             frame_num += 1
 
