@@ -238,7 +238,7 @@ class MovenetMPOpenvino:
 ### 웹캠에 표시하는 부분
     def pd_render(self, frame, bodies):
         thickness = 3 
-        color_skeleton = (255, 200, 90)
+        color_skeleton = (255, 140, 90)
         color_box = (0,255,255)
         for body in bodies:
             if self.tracking:
@@ -311,17 +311,17 @@ class MovenetMPOpenvino:
             if body.track_id not in self.temp_array_dict:
                 self.temp_array_dict[body.track_id] = np.array([])
                 
-            if body.track_id not in self.predicted_label and len(self.temp_array_dict[body.track_id]) >= 200:
+            if body.track_id not in self.predicted_label and len(self.temp_array_dict[body.track_id]) >= 140:
                 self.predicted_label[body.track_id] = [None]
                 
 
 ################################################# 모델##############################################      
                             
             # smoke
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 30 == 0:
+            if len(self.temp_array_dict[body.track_id]) >= 140 and self.frame_counter % 30 == 0:
                 input_data = self.temp_array_dict[body.track_id].copy()
                 
-                input_data = input_data[1:]
+                input_data = input_data[1:-1]
                 
                 # 패딩 추가
                 padding = np.zeros((610 - input_data.shape[0], input_data.shape[1]))
@@ -364,9 +364,9 @@ class MovenetMPOpenvino:
             self.prev_joint_positions = {}
 
         for body in bodies:
-            # ### 610 보다 크면 앞에 부분 자르기 
-            # if len(self.temp_array_dict[body.track_id]) >= 200:
-            #     self.temp_array_dict[body.track_id] = self.temp_array_dict[body.track_id][1:]
+            ### 610 보다 크면 앞에 부분 자르기 
+            if len(self.temp_array_dict[body.track_id]) >= 140:
+                self.temp_array_dict[body.track_id] = self.temp_array_dict[body.track_id][1:]
             head_position = compute_head_position(body.keypoints)
             
             if head_position:
@@ -383,13 +383,14 @@ class MovenetMPOpenvino:
             for column in COLUMN_ORDER:
                 joint_index = KEYPOINT_DICT[column.lower()]
                 data_row.extend([body.keypoints[joint_index][0], body.keypoints[joint_index][1]])
-
-            # Compute the difference between the current and previous joint positions
-            if body.track_id in self.prev_joint_positions:
-                data_row = np.array(data_row) - self.prev_joint_positions[body.track_id] 
             
             # Update the previous joint positions
-            self.prev_joint_positions[body.track_id] = np.array(data_row)
+            if body.track_id not in self.prev_joint_positions or len(self.prev_joint_positions[body.track_id]) == 0:
+                self.prev_joint_positions[body.track_id] = np.array(data_row)
+            
+            # Compute the difference between the current and previous joint positions
+            if body.track_id in self.prev_joint_positions:
+                data_row = self.prev_joint_positions[body.track_id] - np.array(data_row)
 
             if body.track_id not in self.temp_array_dict or len(self.temp_array_dict[body.track_id]) == 0:
                 self.temp_array_dict[body.track_id] = np.array([data_row])
@@ -406,7 +407,9 @@ class MovenetMPOpenvino:
         #     for track_id, array in self.temp_array_dict.items():
         #         print(track_id, array)    
         
-        
+        # # 데이터 확인하기 
+        #     for track_id, array in self.prev_joint_positions.items():
+        #         print(track_id, array)   
             
     def run(self):
 
@@ -439,13 +442,13 @@ class MovenetMPOpenvino:
             nb_pd_inferences += 1
             
             # 10프레임 마다 저장
-            #if self.frame_counter % 10 == 0:  # 10프레임마다 조건을 확인
-            self.save_to_array(bodies)
+            if self.frame_counter % 10 == 0:  # 10프레임마다 조건을 확인
+                self.save_to_array(bodies)
                 
             self.fps.update()               
 
             if self.show_fps:
-                self.fps.draw(frame, orig=(50,50), size=1, color=(240,200,100))
+                self.fps.draw(frame, orig=(50,50), size=1, color=(240,140,100))
             cv2.imshow("Movenet", frame)
 
             if self.output:
