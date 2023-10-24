@@ -90,7 +90,7 @@ class MovenetMPOpenvino:
                 xml=DEFAULT_MODEL, 
                 device="CPU",
                 tracking="oks",
-                score_thresh=0.3,
+                score_thresh=0.35,
                 output=None,
                 csv_output=None):  # <-- Added CSV output parameter
         
@@ -279,9 +279,9 @@ class MovenetMPOpenvino:
             self.pd_render(frame, bodies)
             nb_pd_inferences += 1
 
-            # Save the results to CSV for the current frame
-            if self.csv_output and frame_num % 10 == 0:
-                self.save_to_csv(bodies, self.csv_writer, frame_num)
+            ## 프레임 저장 빈도
+            #if self.csv_output and frame_num % 10 == 0:
+            self.save_to_csv(bodies, self.csv_writer, frame_num)
             frame_num += 1
 
             self.fps.update()               
@@ -362,7 +362,7 @@ if __name__ == "__main__":
     #                     help="Target device to run the model (default=%(default)s)") 
     parser.add_argument("-t", "--tracking", choices=["iou", "oks"], default = "oks",
                         help="Enable tracking and specify method")
-    parser.add_argument("-s", "--score_threshold", default=0.3, type=float,
+    parser.add_argument("-s", "--score_threshold", default=0.35, type=float,
                         help="Confidence score (default=%(default)f)")                     
     parser.add_argument("-o","--output",
                         help="Path to output video file")

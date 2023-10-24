@@ -8,16 +8,18 @@ import argparse
 import os
 from openvino.inference_engine import IENetwork, IECore
 from Tracker import TrackerIoU, TrackerOKS, TRACK_COLORS
-import pandas as pd
 from keras.models import load_model
 from datetime import datetime
+import pandas as pd_lib
+
+
 # import mysql.connector
 # from db_connect import insert_db_data
 # from db_connect import insert_visit
 # from db_connect import insert_vio
 
 
-model6 = load_model('C:/Last_Project/openvino/pred_model/smoke_good_ori.h5')
+model6 = load_model('C:/Last_Project/openvino/pred_model/smoke_last.h5')
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -238,7 +240,7 @@ class MovenetMPOpenvino:
 ### 웹캠에 표시하는 부분
     def pd_render(self, frame, bodies):
         thickness = 3 
-        color_skeleton = (255, 140, 90)
+        color_skeleton = (255, 192, 90)
         color_box = (0,255,255)
         for body in bodies:
             if self.tracking:
@@ -311,18 +313,20 @@ class MovenetMPOpenvino:
             if body.track_id not in self.temp_array_dict:
                 self.temp_array_dict[body.track_id] = np.array([])
                 
-            if body.track_id not in self.predicted_label and len(self.temp_array_dict[body.track_id]) >= 140:
+            if body.track_id not in self.predicted_label and len(self.temp_array_dict[body.track_id]) >= 182:
                 self.predicted_label[body.track_id] = [None]
                 
 
 ################################################# 모델##############################################      
                             
             # smoke
-            if len(self.temp_array_dict[body.track_id]) >= 140 and self.frame_counter % 30 == 0:
+            if len(self.temp_array_dict[body.track_id]) >= 182 and self.frame_counter % 30 == 0:
                 input_data = self.temp_array_dict[body.track_id].copy()
                 
                 input_data = input_data[1:-1]
                 
+                input_data[:, 0] = 1
+                            
                 # 패딩 추가
                 padding = np.zeros((610 - input_data.shape[0], input_data.shape[1]))
                 
@@ -336,6 +340,11 @@ class MovenetMPOpenvino:
                 input_data = input_data.astype(np.float32)
                 
                 input_data = np.array([input_data])
+                
+                
+                # Save to CSV
+                df = pd_lib.DataFrame(input_data[0])
+                df.to_csv(f"input_data_trackid_{body.track_id}_frame_{self.frame_counter}.csv", index=False)
                 
                 
                 prediction = model6.predict(input_data)
@@ -365,7 +374,7 @@ class MovenetMPOpenvino:
 
         for body in bodies:
             ### 610 보다 크면 앞에 부분 자르기 
-            if len(self.temp_array_dict[body.track_id]) >= 140:
+            if len(self.temp_array_dict[body.track_id]) >= 182:
                 self.temp_array_dict[body.track_id] = self.temp_array_dict[body.track_id][1:]
             head_position = compute_head_position(body.keypoints)
             
@@ -384,19 +393,20 @@ class MovenetMPOpenvino:
                 joint_index = KEYPOINT_DICT[column.lower()]
                 data_row.extend([body.keypoints[joint_index][0], body.keypoints[joint_index][1]])
             
-            # Update the previous joint positions
-            if body.track_id not in self.prev_joint_positions or len(self.prev_joint_positions[body.track_id]) == 0:
-                self.prev_joint_positions[body.track_id] = np.array(data_row)
-            
             # Compute the difference between the current and previous joint positions
             if body.track_id in self.prev_joint_positions:
-                data_row = self.prev_joint_positions[body.track_id] - np.array(data_row)
-
-            if body.track_id not in self.temp_array_dict or len(self.temp_array_dict[body.track_id]) == 0:
-                self.temp_array_dict[body.track_id] = np.array([data_row])
+                data_minus = self.prev_joint_positions[body.track_id] - np.array(data_row)
             else:
-                self.temp_array_dict[body.track_id] = np.vstack((self.temp_array_dict[body.track_id], data_row))
-            
+                data_minus = np.zeros_like(np.array(data_row))  # or some other initialization
+                
+            # Update the previous joint positions with the current data_row
+            self.prev_joint_positions[body.track_id] = np.array(data_row)
+                
+                
+            if body.track_id not in self.temp_array_dict or len(self.temp_array_dict[body.track_id]) == 0:
+                self.temp_array_dict[body.track_id] = np.array([data_minus])
+            else:
+                self.temp_array_dict[body.track_id] = np.vstack((self.temp_array_dict[body.track_id], data_minus))
             
             
         # # 형태 확인하기    
@@ -410,6 +420,7 @@ class MovenetMPOpenvino:
         # # 데이터 확인하기 
         #     for track_id, array in self.prev_joint_positions.items():
         #         print(track_id, array)   
+        
             
     def run(self):
 
@@ -448,7 +459,7 @@ class MovenetMPOpenvino:
             self.fps.update()               
 
             if self.show_fps:
-                self.fps.draw(frame, orig=(50,50), size=1, color=(240,140,100))
+                self.fps.draw(frame, orig=(50,50), size=1, color=(240,182,100))
             cv2.imshow("Movenet", frame)
 
             if self.output:
