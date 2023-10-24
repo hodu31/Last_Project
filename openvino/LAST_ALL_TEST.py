@@ -17,15 +17,15 @@ from db_connect import insert_visit
 from db_connect import insert_vio
 
 
-model1 = load_model('C:/Last_Project/사람관절추적모델/pred_model/buyRefund.h5')
-model2 = load_model('C:/Last_Project/사람관절추적모델/pred_model/compare.h5')
-model3 = load_model('C:/Last_Project/사람관절추적모델/pred_model/fire.h5')
-model4 = load_model('C:/Last_Project/사람관절추적모델/pred_model/jeon.h5')
-model5 = load_model('C:/Last_Project/사람관절추적모델/pred_model/select.h5')
-model6 = load_model('C:/Last_Project/사람관절추적모델/pred_model/smoke.h5')
-model7 = load_model('C:/Last_Project/사람관절추적모델/pred_model/theft.h5')
-model8 = load_model('C:/Last_Project/사람관절추적모델/pred_model/yugi.h5')
-model9 = load_model('C:/Last_Project/사람관절추적모델/pred_model/violence.h5')
+model1 = load_model('C:/Last_Project/openvino/pred_model/buy.h5')
+model2 = load_model('C:/Last_Project/openvino/pred_model/compare.h5')
+model3 = load_model('C:/Last_Project/openvino/pred_model/fire.h5')
+model4 = load_model('C:/Last_Project/openvino/pred_model/jeon.h5')
+model5 = load_model('C:/Last_Project/openvino/pred_model/select.h5')
+model6 = load_model('C:/Last_Project/openvino/pred_model/smoke_last.h5')
+model7 = load_model('C:/Last_Project/openvino/pred_model/theft.h5')
+model8 = load_model('C:/Last_Project/openvino/pred_model/yugi.h5')
+# model9 = load_model('C:/Last_Project/openvino/pred_model/violence.h5')
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -322,21 +322,26 @@ class MovenetMPOpenvino:
             if body.track_id not in self.temp_array_dict:
                 self.temp_array_dict[body.track_id] = np.array([])
                 
-            if body.track_id not in self.predicted_label and len(self.temp_array_dict[body.track_id]) >= 300:
-                self.predicted_label[body.track_id] = [[], [], [], [], [], [], [], []]
+            if body.track_id not in self.predicted_label and len(self.temp_array_dict[body.track_id]) >= 200:
+                self.predicted_label[body.track_id] = [None, None, None, None, None, None, None, None]
                 
-            if body.track_id not in self.time_data and len(self.temp_array_dict[body.track_id]) >= 300:
+            if body.track_id not in self.time_data and len(self.temp_array_dict[body.track_id]) >= 200:
                 self.time_data[body.track_id] = [[], [], [], [], [], [], [], []]
             
 
 ################################################# 모델##############################################
             
             # buy Refund
-            if len(self.temp_array_dict[body.track_id]) >= 300 and self.frame_counter % 160 == 0:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 0:
                 input_data = self.temp_array_dict[body.track_id].copy()
-
+                
+                input_data = input_data[1:-1]
+                
+                input_data[:, 0] = 1
+                            
                 # 패딩 추가
-                padding = np.zeros((610 - input_data.shape[0], 27))
+                padding = np.zeros((610 - input_data.shape[0], input_data.shape[1]))
+                
                 input_data = np.vstack((input_data, padding))
                 
                 # 마지막 열에 인덱스 추가
@@ -347,6 +352,7 @@ class MovenetMPOpenvino:
                 input_data = input_data.astype(np.float32)
                 
                 input_data = np.array([input_data])
+                
                 
                 prediction = model1.predict(input_data)
                 
@@ -359,11 +365,16 @@ class MovenetMPOpenvino:
                     
                             
             # compare
-            if len(self.temp_array_dict[body.track_id]) >= 300 and self.frame_counter % 160 == 20:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 20:
                 input_data = self.temp_array_dict[body.track_id].copy()
-
+                
+                input_data = input_data[1:-1]
+                
+                input_data[:, 0] = 1
+                            
                 # 패딩 추가
-                padding = np.zeros((610 - input_data.shape[0], 27))
+                padding = np.zeros((610 - input_data.shape[0], input_data.shape[1]))
+                
                 input_data = np.vstack((input_data, padding))
                 
                 # 마지막 열에 인덱스 추가
@@ -386,11 +397,16 @@ class MovenetMPOpenvino:
                     
                             
             # fire
-            if len(self.temp_array_dict[body.track_id]) >= 300 and self.frame_counter % 160 == 40:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 40:
                 input_data = self.temp_array_dict[body.track_id].copy()
-
+                
+                input_data = input_data[1:-1]
+                
+                input_data[:, 0] = 1
+                            
                 # 패딩 추가
-                padding = np.zeros((610 - input_data.shape[0], 27))
+                padding = np.zeros((610 - input_data.shape[0], input_data.shape[1]))
+                
                 input_data = np.vstack((input_data, padding))
                 
                 # 마지막 열에 인덱스 추가
@@ -413,11 +429,16 @@ class MovenetMPOpenvino:
                     
                     
             # jeon
-            if len(self.temp_array_dict[body.track_id]) >= 300 and self.frame_counter % 160 == 60:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 60:
                 input_data = self.temp_array_dict[body.track_id].copy()
-
+                
+                input_data = input_data[1:-1]
+                
+                input_data[:, 0] = 1
+                            
                 # 패딩 추가
-                padding = np.zeros((610 - input_data.shape[0], 27))
+                padding = np.zeros((610 - input_data.shape[0], input_data.shape[1]))
+                
                 input_data = np.vstack((input_data, padding))
                 
                 # 마지막 열에 인덱스 추가
@@ -440,11 +461,16 @@ class MovenetMPOpenvino:
                     
                             
             # select
-            if len(self.temp_array_dict[body.track_id]) >= 300 and self.frame_counter % 160 == 80:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 80:
                 input_data = self.temp_array_dict[body.track_id].copy()
-
+                
+                input_data = input_data[1:-1]
+                
+                input_data[:, 0] = 1
+                            
                 # 패딩 추가
-                padding = np.zeros((610 - input_data.shape[0], 27))
+                padding = np.zeros((610 - input_data.shape[0], input_data.shape[1]))
+                
                 input_data = np.vstack((input_data, padding))
                 
                 # 마지막 열에 인덱스 추가
@@ -467,11 +493,16 @@ class MovenetMPOpenvino:
                     
                     
             # smoke
-            if len(self.temp_array_dict[body.track_id]) >= 300 and self.frame_counter % 160 == 100:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 100:
                 input_data = self.temp_array_dict[body.track_id].copy()
-
+                
+                input_data = input_data[1:-1]
+                
+                input_data[:, 0] = 1
+                            
                 # 패딩 추가
-                padding = np.zeros((610 - input_data.shape[0], 27))
+                padding = np.zeros((610 - input_data.shape[0], input_data.shape[1]))
+                
                 input_data = np.vstack((input_data, padding))
                 
                 # 마지막 열에 인덱스 추가
@@ -493,11 +524,16 @@ class MovenetMPOpenvino:
                     self.predicted_label[body.track_id][5] = 'YES_smoke'
                     
             # theft
-            if len(self.temp_array_dict[body.track_id]) >= 300 and self.frame_counter % 160 == 120:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 120:
                 input_data = self.temp_array_dict[body.track_id].copy()
-
+                
+                input_data = input_data[1:-1]
+                
+                input_data[:, 0] = 1
+                            
                 # 패딩 추가
-                padding = np.zeros((610 - input_data.shape[0], 27))
+                padding = np.zeros((610 - input_data.shape[0], input_data.shape[1]))
+                
                 input_data = np.vstack((input_data, padding))
                 
                 # 마지막 열에 인덱스 추가
@@ -521,11 +557,16 @@ class MovenetMPOpenvino:
                     
             
              # yugi
-            if len(self.temp_array_dict[body.track_id]) >= 300 and self.frame_counter % 160 == 140:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 140:
                 input_data = self.temp_array_dict[body.track_id].copy()
                 
+                input_data = input_data[1:-1]
+                
+                input_data[:, 0] = 1
+                            
                 # 패딩 추가
-                padding = np.zeros((610 - input_data.shape[0], 27))
+                padding = np.zeros((610 - input_data.shape[0], input_data.shape[1]))
+                
                 input_data = np.vstack((input_data, padding))
                 
                 # 마지막 열에 인덱스 추가
@@ -535,40 +576,40 @@ class MovenetMPOpenvino:
                 # 데이터 형변환
                 input_data = input_data.astype(np.float32)
                 
-                
                 input_data = np.array([input_data])
+                
                 prediction = model8.predict(input_data)
                 
                 if np.argmax(prediction) == 0:
                     self.predicted_label[body.track_id][7] = 'NO_yugi'
                 elif np.argmax(prediction) == 1:
                     self.predicted_label[body.track_id][7] = 'YES_yugi' 
+            
+             # violence
+            # if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 210:
+            #     input_data = self.temp_array_dict[body.track_id].copy()
+                
+            #     # 패딩 추가
+            #     padding = np.zeros((610 - input_data.shape[0], 27))
+            #     input_data = np.vstack((input_data, padding))
+                
+            #     # 마지막 열에 인덱스 추가
+            #     index_array = np.arange(input_data.shape[0]).reshape(-1, 1)
+            #     input_data = np.hstack((input_data, index_array))
+                
+            #     # 데이터 형변환
+            #     input_data = input_data.astype(np.float32)
+                
+                
+            #     input_data = np.array([input_data])
+            #     prediction = model8.predict(input_data)
+                
+            #     if np.argmax(prediction) == 0:
+            #         self.predicted_label[body.track_id][7] = 'NO_yugi'
+            #     elif np.argmax(prediction) == 1:
+            #         self.predicted_label[body.track_id][7] = 'YES_yugi' 
                     
                     
-            #violence
-            if len(self.array_list) >= 300 and self.frame_counter % 160 == 150 and len(bodies) >= 2:
-                input_data = self.array_list.copy()
-                input_data = np.array(input_data)
-                input_data = input_data.astype(np.float32)
-                
-                # 패딩 추가
-                padding = np.zeros((610 - input_data.shape[0], 27))
-                input_data = np.vstack((input_data, padding))
-                
-                # 마지막 열에 인덱스 추가
-                index_array = np.arange(input_data.shape[0]).reshape(-1, 1)
-                input_data = np.hstack((input_data, index_array))
-                
-                # 데이터 형변환
-                input_data = input_data.astype(np.float32)
-                
-                input_data = np.array([input_data])
-                prediction = model9.predict(input_data)
-                
-                if np.argmax(prediction) == 0:
-                    self.predict_violence = 'NO_violence'
-                elif np.argmax(prediction) == 1:
-                    self.predict_violence = 'YES_violence'
                     
 
             if self.predicted_label is not None and body.track_id in self.predicted_label:
@@ -581,26 +622,23 @@ class MovenetMPOpenvino:
                 cv2.putText(frame, "{}".format(self.predicted_label[body.track_id][4:6]), text_position_3, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
                 cv2.putText(frame, "{}".format(self.predicted_label[body.track_id][6:8]), text_position_4, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
                 
-            if self.predict_violence is not None:
-                text_position_5 = (body.xmin, body.ymin+160)
-                cv2.putText(frame, "{}".format(self.predict_violence), text_position_5, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
                 
     def save_to_array(self, bodies):
         if not hasattr(self, 'temp_array_dict'):
             self.temp_array_dict = {}
+        if not hasattr(self, 'prev_joint_positions'):
+            self.prev_joint_positions = {}
 
         for body in bodies:
             ### 610 보다 크면 앞에 부분 자르기 
-            if len(self.temp_array_dict[body.track_id]) >= 300:
+            if len(self.temp_array_dict[body.track_id]) >= 200:
                 self.temp_array_dict[body.track_id] = self.temp_array_dict[body.track_id][1:]
-                
             head_position = compute_head_position(body.keypoints)
             
             if head_position:
                 body.keypoints[KEYPOINT_DICT['head']] = head_position
-                
+
             data_row = [len(bodies)]
-            
             COLUMN_ORDER = [
                 'left_shoulder', 'left_elbow', 'left_wrist',
                 'right_shoulder', 'right_elbow', 'right_wrist',
@@ -612,54 +650,33 @@ class MovenetMPOpenvino:
                 joint_index = KEYPOINT_DICT[column.lower()]
                 data_row.extend([body.keypoints[joint_index][0], body.keypoints[joint_index][1]])
             
-            
-            if body.track_id not in self.temp_array_dict or len(self.temp_array_dict[body.track_id]) == 0:
-                # Initialize the track_id entry with the data_row if it doesn't exist
-                self.temp_array_dict[body.track_id] = np.array([data_row])
+            # Compute the difference between the current and previous joint positions
+            if body.track_id in self.prev_joint_positions:
+                data_minus = self.prev_joint_positions[body.track_id] - np.array(data_row)
             else:
-                # Append the data_row to the existing track_id entry
-                self.temp_array_dict[body.track_id] = np.vstack((self.temp_array_dict[body.track_id], data_row))
+                data_minus = np.zeros_like(np.array(data_row))  # or some other initialization
                 
-             # ### 형태 확인하기    
-            # for track_id, array in self.temp_array_dict.items():
-            #     print(f"Shape for track_id {track_id}: {array.shape}")
-            
-            ## 데이터 확인하기 
-            # for track_id, array in self.temp_array_dict.items():
-            #     print(track_id, array)
-            
-    
-    def save_vio(self, bodies):
-        if not hasattr(self, 'array_list'):
-            self.array_list = []
-
-        for body in bodies:
-            if len(self.array_list) >= 300:
-                self.array_list = self.array_list[1:]
-            
-            head_position = compute_head_position(body.keypoints)
-            
-            if head_position:
-                body.keypoints[KEYPOINT_DICT['head']] = head_position
+            # Update the previous joint positions with the current data_row
+            self.prev_joint_positions[body.track_id] = np.array(data_row)
                 
-            data_row = [len(bodies)]
-            
-            COLUMN_ORDER = [
-                'left_shoulder', 'left_elbow', 'left_wrist',
-                'right_shoulder', 'right_elbow', 'right_wrist',
-                'left_hip', 'left_knee', 'left_ankle',
-                'right_hip', 'right_knee', 'right_ankle',
-                'head']
-
-            for column in COLUMN_ORDER:
-                joint_index = KEYPOINT_DICT[column.lower()]
-                data_row.extend([body.keypoints[joint_index][0], body.keypoints[joint_index][1]])
                 
-            self.array_list.append(data_row)
+            if body.track_id not in self.temp_array_dict or len(self.temp_array_dict[body.track_id]) == 0:
+                self.temp_array_dict[body.track_id] = np.array([data_minus])
+            else:
+                self.temp_array_dict[body.track_id] = np.vstack((self.temp_array_dict[body.track_id], data_minus))
             
-            # 데이터 확인하기 
             
-            #print(self.array_list)
+        # # 형태 확인하기    
+        # for track_id, array in self.temp_array_dict.items():
+        #     print(f"Shape for track_id {track_id}: {array.shape}")
+        
+        # # 데이터 확인하기 
+        #     for track_id, array in self.temp_array_dict.items():
+        #         print(track_id, array)    
+        
+        # # 데이터 확인하기 
+        #     for track_id, array in self.prev_joint_positions.items():
+        #         print(track_id, array)   
     
     
     
@@ -693,16 +710,15 @@ class MovenetMPOpenvino:
             self.pd_render(frame, bodies)
             nb_pd_inferences += 1
             
-            # 2프레임 마다 저장
-            if self.frame_counter % 2 == 0:  # 2프레임마다 조건을 확인
+            # 10프레임 마다 저장
+            if self.frame_counter % 5 == 0:  # 10프레임마다 조건을 확인
                 self.save_to_array(bodies)
                 
-            self.save_vio(bodies)
 
             self.fps.update()               
 
             if self.show_fps:
-                self.fps.draw(frame, orig=(50,50), size=1, color=(240,180,100))
+                self.fps.draw(frame, orig=(50,50), size=1, color=(160,180,100))
             cv2.imshow("Movenet", frame)
 
             if self.output:
