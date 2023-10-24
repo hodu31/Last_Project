@@ -313,14 +313,14 @@ class MovenetMPOpenvino:
             if body.track_id not in self.temp_array_dict:
                 self.temp_array_dict[body.track_id] = np.array([])
                 
-            if body.track_id not in self.predicted_label and len(self.temp_array_dict[body.track_id]) >= 182:
+            if body.track_id not in self.predicted_label and len(self.temp_array_dict[body.track_id]) >= 200:
                 self.predicted_label[body.track_id] = [None]
                 
 
 ################################################# 모델##############################################      
                             
             # smoke
-            if len(self.temp_array_dict[body.track_id]) >= 182 and self.frame_counter % 30 == 0:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 30 == 0:
                 input_data = self.temp_array_dict[body.track_id].copy()
                 
                 input_data = input_data[1:-1]
@@ -342,9 +342,9 @@ class MovenetMPOpenvino:
                 input_data = np.array([input_data])
                 
                 
-                # Save to CSV
-                df = pd_lib.DataFrame(input_data[0])
-                df.to_csv(f"input_data_trackid_{body.track_id}_frame_{self.frame_counter}.csv", index=False)
+                # # Save to CSV
+                # df = pd_lib.DataFrame(input_data[0])
+                # df.to_csv(f"input_data_trackid_{body.track_id}_frame_{self.frame_counter}.csv", index=False)
                 
                 
                 prediction = model6.predict(input_data)
@@ -374,7 +374,7 @@ class MovenetMPOpenvino:
 
         for body in bodies:
             ### 610 보다 크면 앞에 부분 자르기 
-            if len(self.temp_array_dict[body.track_id]) >= 182:
+            if len(self.temp_array_dict[body.track_id]) >= 200:
                 self.temp_array_dict[body.track_id] = self.temp_array_dict[body.track_id][1:]
             head_position = compute_head_position(body.keypoints)
             
@@ -453,13 +453,13 @@ class MovenetMPOpenvino:
             nb_pd_inferences += 1
             
             # 10프레임 마다 저장
-            if self.frame_counter % 10 == 0:  # 10프레임마다 조건을 확인
+            if self.frame_counter % 5 == 0:  # 10프레임마다 조건을 확인
                 self.save_to_array(bodies)
                 
             self.fps.update()               
 
             if self.show_fps:
-                self.fps.draw(frame, orig=(50,50), size=1, color=(240,182,100))
+                self.fps.draw(frame, orig=(50,50), size=1, color=(240,200,100))
             cv2.imshow("Movenet", frame)
 
             if self.output:
