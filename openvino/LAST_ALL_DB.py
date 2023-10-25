@@ -118,6 +118,7 @@ class MovenetMPOpenvino:
         self.shop_id = '#001'
         self.vio_time = None
         self.predicted_label = {}
+        self.count_predicted = {}
         self.predict_violence = None
         self.time_data = {}
         self.db_data = []
@@ -327,6 +328,9 @@ class MovenetMPOpenvino:
                 
             if body.track_id not in self.time_data and len(self.temp_array_dict[body.track_id]) >= 200:
                 self.time_data[body.track_id] = [[], [], [], [], [], [], [], []]
+                
+            if body.track_id not in self.count_predicted and len(self.temp_array_dict[body.track_id]) >= 200:
+                self.count_predicted[body.track_id] = [0, 0, 0, 0, 0, 0, 0, 0]
             
 
 ################################################# 모델##############################################
@@ -487,17 +491,22 @@ class MovenetMPOpenvino:
                 if np.argmax(prediction) == 0:
                     self.predicted_label[body.track_id][3] = 'NO_jeon'
                 elif np.argmax(prediction) == 1:
-                    self.predicted_label[body.track_id][3] = 'YES_jeon'
+                    self.count_predicted[body.track_id][3] + 1
                     
-                    if len(self.time_data[body.track_id][3]) == 0:
-                        self.time_data[body.track_id][3] = [now_time]
-                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 4]
-                        insert_db_data(data)
-                    elif len(self.time_data[body.track_id][3]) != 0:
-                        if (now_time - self.time_data[body.track_id][3][0]).seconds >= 30:
+                    if self.count_predicted[body.track_id][3] >= 3:  
+                        self.predicted_label[body.track_id][3] = 'YES_jeon'
+                        
+                        if len(self.time_data[body.track_id][3]) == 0:
                             self.time_data[body.track_id][3] = [now_time]
                             data = [self.user_id ,self.shop_id, body.track_id, now_time, 4]
                             insert_db_data(data)
+                        elif len(self.time_data[body.track_id][3]) != 0:
+                            if (now_time - self.time_data[body.track_id][3][0]).seconds >= 30:
+                                self.time_data[body.track_id][3] = [now_time]
+                                data = [self.user_id ,self.shop_id, body.track_id, now_time, 4]
+                                insert_db_data(data)
+                        if self.count_predicted[body.track_id][3] >= 5:  
+                            self.count_predicted[body.track_id][3] = 0
                     
                             
             # select
