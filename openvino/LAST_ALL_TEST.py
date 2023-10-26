@@ -332,7 +332,7 @@ class MovenetMPOpenvino:
 ################################################# 모델##############################################
             
             # buy Refund
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 0:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 180 == 0:
                 input_data = self.temp_array_dict[body.track_id].copy()
                 
                 input_data = input_data[1:-1]
@@ -365,7 +365,7 @@ class MovenetMPOpenvino:
                     
                             
             # compare
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 20:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 180 == 20:
                 input_data = self.temp_array_dict[body.track_id].copy()
                 
                 input_data = input_data[1:-1]
@@ -397,7 +397,7 @@ class MovenetMPOpenvino:
                     
                             
             # fire
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 40:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 180 == 40:
                 input_data = self.temp_array_dict[body.track_id].copy()
                 
                 input_data = input_data[1:-1]
@@ -429,7 +429,7 @@ class MovenetMPOpenvino:
                     
                     
             # jeon
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 60:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 180 == 60:
                 input_data = self.temp_array_dict[body.track_id].copy()
                 
                 input_data = input_data[1:-1]
@@ -461,7 +461,7 @@ class MovenetMPOpenvino:
                     
                             
             # select
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 80:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 180 == 80:
                 input_data = self.temp_array_dict[body.track_id].copy()
                 
                 input_data = input_data[1:-1]
@@ -493,7 +493,7 @@ class MovenetMPOpenvino:
                     
                     
             # smoke
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 100:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 180 == 100:
                 input_data = self.temp_array_dict[body.track_id].copy()
                 
                 input_data = input_data[1:-1]
@@ -524,7 +524,7 @@ class MovenetMPOpenvino:
                     self.predicted_label[body.track_id][5] = 'YES_smoke'
                     
             # theft
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 120:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 180 == 120:
                 input_data = self.temp_array_dict[body.track_id].copy()
                 
                 input_data = input_data[1:-1]
@@ -557,7 +557,7 @@ class MovenetMPOpenvino:
                     
             
              # yugi
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 140:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 180 == 140:
                 input_data = self.temp_array_dict[body.track_id].copy()
                 
                 input_data = input_data[1:-1]
@@ -586,7 +586,7 @@ class MovenetMPOpenvino:
                     self.predicted_label[body.track_id][7] = 'YES_yugi' 
             
             # violence
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 210:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 180 == 160:
                 input_data = self.temp_array_dict[body.track_id].copy()
                 
                 input_data = input_data[1:-1]
@@ -723,7 +723,7 @@ class MovenetMPOpenvino:
             self.fps.update()               
 
             if self.show_fps:
-                self.fps.draw(frame, orig=(50,50), size=1, color=(160,180,100))
+                self.fps.draw(frame, orig=(50,50), size=1, color=(180,180,100))
             cv2.imshow("Movenet", frame)
 
             if self.output:
