@@ -25,7 +25,7 @@ model5 = load_model('C:/Last_Project/openvino/pred_model/select.h5')
 model6 = load_model('C:/Last_Project/openvino/pred_model/smoke_last.h5')
 model7 = load_model('C:/Last_Project/openvino/pred_model/theft.h5')
 model8 = load_model('C:/Last_Project/openvino/pred_model/yugi.h5')
-# model9 = load_model('C:/Last_Project/openvino/pred_model/violence.h5')
+model9 = load_model('C:/Last_Project/openvino/pred_model/violence.h5')
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -326,7 +326,7 @@ class MovenetMPOpenvino:
                 self.predicted_label[body.track_id] = [None, None, None, None, None, None, None, None]
                 
             if body.track_id not in self.time_data and len(self.temp_array_dict[body.track_id]) >= 200:
-                self.time_data[body.track_id] = [[], [], [], [], [], [], [], []]
+                self.time_data[body.track_id] = [[], [], [], [], [], [], [], [], []]
             
 
 ################################################# 모델##############################################
@@ -585,29 +585,34 @@ class MovenetMPOpenvino:
                 elif np.argmax(prediction) == 1:
                     self.predicted_label[body.track_id][7] = 'YES_yugi' 
             
-             # violence
-            # if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 210:
-            #     input_data = self.temp_array_dict[body.track_id].copy()
+            # violence
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 160 == 210:
+                input_data = self.temp_array_dict[body.track_id].copy()
                 
-            #     # 패딩 추가
-            #     padding = np.zeros((610 - input_data.shape[0], 27))
-            #     input_data = np.vstack((input_data, padding))
+                input_data = input_data[1:-1]
                 
-            #     # 마지막 열에 인덱스 추가
-            #     index_array = np.arange(input_data.shape[0]).reshape(-1, 1)
-            #     input_data = np.hstack((input_data, index_array))
+                input_data[:, 0] = 1
+                            
+                # 패딩 추가
+                padding = np.zeros((610 - input_data.shape[0], input_data.shape[1]))
                 
-            #     # 데이터 형변환
-            #     input_data = input_data.astype(np.float32)
+                input_data = np.vstack((input_data, padding))
                 
+                # 마지막 열에 인덱스 추가
+                index_array = np.arange(input_data.shape[0]).reshape(-1, 1)
+                input_data = np.hstack((input_data, index_array))
                 
-            #     input_data = np.array([input_data])
-            #     prediction = model8.predict(input_data)
+                # 데이터 형변환
+                input_data = input_data.astype(np.float32)
                 
-            #     if np.argmax(prediction) == 0:
-            #         self.predicted_label[body.track_id][7] = 'NO_yugi'
-            #     elif np.argmax(prediction) == 1:
-            #         self.predicted_label[body.track_id][7] = 'YES_yugi' 
+                input_data = np.array([input_data])
+                
+                prediction = model9.predict(input_data)
+                
+                if np.argmax(prediction) == 0:
+                    self.predicted_label[body.track_id][8] = 'NO_violence'
+                elif np.argmax(prediction) == 1:
+                    self.predicted_label[body.track_id][8] = 'YES_violence' 
                     
                     
                     

@@ -19,7 +19,7 @@ import pandas as pd_lib
 # from db_connect import insert_vio
 
 
-model6 = load_model('C:/Last_Project/openvino/pred_model/theft.h5')
+model6 = load_model('C:/Last_Project/openvino/pred_model/smoke_last.h5')
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
