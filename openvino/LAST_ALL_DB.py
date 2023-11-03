@@ -25,7 +25,7 @@ model5 = load_model('C:/Last_Project/openvino/pred_model/select.h5')
 model6 = load_model('C:/Last_Project/openvino/pred_model/smoke_last.h5')
 model7 = load_model('C:/Last_Project/openvino/pred_model/theft.h5')
 model8 = load_model('C:/Last_Project/openvino/pred_model/yugi.h5')
-# model9 = load_model('C:/Last_Project/openvino/pred_model/violence.h5')
+model9 = load_model('C:/Last_Project/openvino/pred_model/violence.h5')
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
