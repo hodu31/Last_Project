@@ -2,23 +2,23 @@ import mysql.connector
 
 def insert_db_data(data):
     # MySQL 연결 정보 설정
-    config = {
-        'user': 'admin',
-        'password': 'noticare',
-        'host': 'db-noticare.cvcrdfcptqp8.ap-northeast-2.rds.amazonaws.com',
-        'database': 'security',
-        'port': 3306,
-        'raise_on_warnings': True
-    }
-    
     # config = {
-    #     'user': 'root',
-    #     'password': '0000',
-    #     'host': '127.0.0.1',
+    #     'user': 'admin',
+    #     'password': 'noticare',
+    #     'host': 'db-noticare.cvcrdfcptqp8.ap-northeast-2.rds.amazonaws.com',
     #     'database': 'security',
     #     'port': 3306,
     #     'raise_on_warnings': True
     # }
+    
+    config = {
+        'user': 'root',
+        'password': '0000',
+        'host': '127.0.0.1',
+        'database': 'security',
+        'port': 3306,
+        'raise_on_warnings': True
+    }
 
     # 데이터베이스에 연결
     cnx = mysql.connector.connect(**config)
@@ -43,23 +43,23 @@ def insert_db_data(data):
 
 def insert_visit(data):
     # MySQL 연결 정보 설정
-    config = {
-        'user': 'admin',
-        'password': 'noticare',
-        'host': 'db-noticare.cvcrdfcptqp8.ap-northeast-2.rds.amazonaws.com',
-        'database': 'security',
-        'port': 3306,
-        'raise_on_warnings': True
-    }
-    
     # config = {
-    #     'user': 'root',
-    #     'password': '0000',
-    #     'host': '127.0.0.1',
+    #     'user': 'admin',
+    #     'password': 'noticare',
+    #     'host': 'db-noticare.cvcrdfcptqp8.ap-northeast-2.rds.amazonaws.com',
     #     'database': 'security',
     #     'port': 3306,
     #     'raise_on_warnings': True
     # }
+    
+    config = {
+        'user': 'root',
+        'password': '0000',
+        'host': '127.0.0.1',
+        'database': 'security',
+        'port': 3306,
+        'raise_on_warnings': True
+    }
     
     # 데이터베이스에 연결
     cnx = mysql.connector.connect(**config)
@@ -86,23 +86,23 @@ def insert_visit(data):
     
 def insert_vio(data):
     # MySQL 연결 정보 설정
-    config = {
-        'user': 'admin',
-        'password': 'noticare',
-        'host': 'db-noticare.cvcrdfcptqp8.ap-northeast-2.rds.amazonaws.com',
-        'database': 'security',
-        'port': 3306,
-        'raise_on_warnings': True
-    }
-    
     # config = {
-    #     'user': 'root',
-    #     'password': '0000',
-    #     'host': '127.0.0.1',
+    #     'user': 'admin',
+    #     'password': 'noticare',
+    #     'host': 'db-noticare.cvcrdfcptqp8.ap-northeast-2.rds.amazonaws.com',
     #     'database': 'security',
     #     'port': 3306,
     #     'raise_on_warnings': True
     # }
+    
+    config = {
+        'user': 'root',
+        'password': '0000',
+        'host': '127.0.0.1',
+        'database': 'security',
+        'port': 3306,
+        'raise_on_warnings': True
+    }
     
     # 데이터베이스에 연결
     cnx = mysql.connector.connect(**config)

@@ -8,15 +8,13 @@ import argparse
 import os
 from openvino.inference_engine import IENetwork, IECore
 from Tracker import TrackerIoU, TrackerOKS, TRACK_COLORS
+import pandas as pd
 from keras.models import load_model
 from datetime import datetime
-import pandas as pd_lib
-
-
-# import mysql.connector
-# from db_connect import insert_db_data
-# from db_connect import insert_visit
-# from db_connect import insert_vio
+import mysql.connector
+from db_connect import insert_db_data
+from db_connect import insert_visit
+from db_connect import insert_vio
 
 
 model6 = load_model('C:/Last_Project/openvino/pred_model/jeon.h5')
@@ -111,6 +109,7 @@ class MovenetMPOpenvino:
         self.visited_tracks = {} 
         self.predicted_label = {}
         self.db_data = []
+        self.time_data = {}
         self.prev_keypoints = {}
         self.temp_array_dict = {}
         self.last_dict = {}
@@ -139,14 +138,14 @@ class MovenetMPOpenvino:
             self.input_type = "video"
             if input_src.isdigit(): 
                 input_type = "webcam"
-                input_src = 1 #int(input_src)
+                input_src = int(input_src)
             self.cap = cv2.VideoCapture(input_src)
             self.video_fps = int(self.cap.get(cv2.CAP_PROP_FPS))
             self.img_w = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
             self.img_h = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         print("Video FPS:", self.video_fps)
     
-        # Load Openvino models3
+        # Load Openvino models
         self.load_model(xml, device)     
 
         # Rendering flags
@@ -289,7 +288,7 @@ class MovenetMPOpenvino:
                 if body.track_id in self.prev_keypoints:  # 해당 바디의 이전 키포인트를 가져옵니다.
                     prev_keypoints_for_body = self.prev_keypoints[body.track_id]
                     total_movement = np.sum(np.abs(current_keypoints - prev_keypoints_for_body))
-                    if total_movement < 10 * 17:
+                    if total_movement < 8 * 17:
                         # 여기서 해당 track_id가 stop_frame_count_dict에 없으면 초기화해줍니다.
                         if body.track_id not in self.stop_frame_count_dict:
                             self.stop_frame_count_dict[body.track_id] = 0
@@ -308,6 +307,10 @@ class MovenetMPOpenvino:
             now_time = datetime.now()
             now_time = now_time.replace(microsecond=0)
             
+            
+                
+            if body.track_id not in self.time_data and len(self.temp_array_dict[body.track_id]) >= 200:
+                self.time_data[body.track_id] = [[],[]]
             
             if body.track_id not in self.temp_array_dict:
                 self.temp_array_dict[body.track_id] = np.array([])
@@ -351,9 +354,20 @@ class MovenetMPOpenvino:
                 
                 
                 if np.argmax(prediction) == 0:
-                    self.predicted_label[body.track_id][0] = 'NO_faint'
+                    self.predicted_label[body.track_id][0] = 'NO_smoke'
                 elif np.argmax(prediction) == 1:
-                    self.predicted_label[body.track_id][0] = 'YES_faint'
+                    self.predicted_label[body.track_id][0] = 'YES_smoke'
+                    
+                    
+                    if len(self.time_data[body.track_id][0]) == 0:
+                        self.time_data[body.track_id][0] = [now_time]
+                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
+                        insert_db_data(data)
+                    elif len(self.time_data[body.track_id][0]) != 0:
+                        if (now_time - self.time_data[body.track_id][0][0]).seconds >= 30:
+                            self.time_data[body.track_id][0] = [now_time]
+                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 1]
+                            insert_db_data(data)
                     
                     
                     
