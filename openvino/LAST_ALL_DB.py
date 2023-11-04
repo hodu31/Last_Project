@@ -789,6 +789,11 @@ class MovenetMPOpenvino:
         self.fps = FPS()
         nb_pd_inferences = 0
         glob_pd_rtrip_time = 0
+        
+        # 카메라 해상도 설정
+        if hasattr(self, 'cap'):
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
         while True:
             
