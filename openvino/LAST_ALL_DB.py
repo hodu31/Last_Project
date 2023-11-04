@@ -19,7 +19,6 @@ from db_connect import insert_vio
 
 model1 = load_model('C:/Last_Project/openvino/pred_model/buy.h5')
 model2 = load_model('C:/Last_Project/openvino/pred_model/compare.h5')
-model3 = load_model('C:/Last_Project/openvino/pred_model/fire.h5')
 model4 = load_model('C:/Last_Project/openvino/pred_model/jeon.h5')
 model5 = load_model('C:/Last_Project/openvino/pred_model/select.h5')
 model6 = load_model('C:/Last_Project/openvino/pred_model/smoke_last.h5')
@@ -419,47 +418,7 @@ class MovenetMPOpenvino:
                             data = [self.user_id ,self.shop_id, body.track_id, now_time, 2]
                             insert_db_data(data)
                     
-                            
-            # fire
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 270 == 60:
-                input_data = self.temp_array_dict[body.track_id].copy()
-                
-                input_data = input_data[1:-1]
-                
-                input_data[:, 0] = 1
-                            
-                # 패딩 추가
-                padding = np.zeros((610 - input_data.shape[0], input_data.shape[1]))
-                
-                input_data = np.vstack((input_data, padding))
-                
-                # 마지막 열에 인덱스 추가
-                index_array = np.arange(input_data.shape[0]).reshape(-1, 1)
-                input_data = np.hstack((input_data, index_array))
-                
-                # 데이터 형변환
-                input_data = input_data.astype(np.float32)
-                
-                input_data = np.array([input_data])
-                
-                prediction = model3.predict(input_data)
-                
-                
-                
-                if np.argmax(prediction) == 0:
-                    self.predicted_label[body.track_id][2] = 'NO_fire'
-                elif np.argmax(prediction) == 1:
-                    self.predicted_label[body.track_id][2] = 'YES_fire'
-                    
-                    if len(self.time_data[body.track_id][2]) == 0:
-                        self.time_data[body.track_id][2] = [now_time]
-                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 3]
-                        insert_db_data(data)
-                    elif len(self.time_data[body.track_id][2]) != 0:
-                        if (now_time - self.time_data[body.track_id][2][0]).seconds >= 30:
-                            self.time_data[body.track_id][2] = [now_time]
-                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 3]
-                            insert_db_data(data)
+    
                     
                     
             # jeon
