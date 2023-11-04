@@ -98,11 +98,14 @@ class Body:
     def str_bbox(self):
         return f"xmin={self.xmin} xmax={self.xmax} ymin={self.ymin} ymax={self.ymax}"
 
-# Padding (all values are in pixel) :
-# w (resp. h): horizontal (resp. vertical) padding on the source image to make its ratio same as Movenet model input. 
-#               The padding is done on one side (bottom or right) of the image.
-# padded_w (resp. padded_h): width (resp. height) of the image after padding
-Padding = namedtuple('Padding', ['w', 'h', 'padded_w',  'padded_h'])
+# Padding (모든 값은 픽셀 단위):
+# w (resp. h): 소스 이미지에 가로 (resp. 세로) 패딩을 추가하여 Movenet 모델 입력과 동일한 비율을 만듭니다.
+# 패딩은 이미지의 한쪽(아래쪽 또는 오른쪽)에 적용됩니다.
+# padded_w (resp. padded_h): 패딩 후 이미지의 너비 (resp. 높이)
+Padding = namedtuple('Padding', ['w', 'h', 'padded_w', 'padded_h'])
+
+# 고정된 패딩 값으로 Padding 인스턴스 생성
+padding_values = Padding(w=0, h=840, padded_w=1920, padded_h=1920)
 
 class MovenetMPOpenvino:
     def __init__(self, input_src=None,
@@ -178,10 +181,10 @@ class MovenetMPOpenvino:
         # when depadding
         if self.img_w / self.img_h > self.pd_w / self.pd_h:
             pad_h = int(self.img_w * self.pd_h / self.pd_w - self.img_h)
-            self.padding = Padding(0, pad_h, self.img_w, self.img_h + pad_h)
+            self.padding = Padding(w=0, h=840, padded_w=1920, padded_h=1920)
         else:
             pad_w = int(self.img_h * self.pd_w / self.pd_h - self.img_w)
-            self.padding = Padding(pad_w, 0, self.img_w + pad_w, self.img_h)
+            self.padding = Padding(w=0, h=840, padded_w=1920, padded_h=1920)
         print("Padding:", self.padding)
         
     def load_model(self, xml_path, device):
