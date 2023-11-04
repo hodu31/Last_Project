@@ -690,6 +690,11 @@ class MovenetMPOpenvino:
         self.fps = FPS()
         nb_pd_inferences = 0
         glob_pd_rtrip_time = 0
+        
+        # 카메라 해상도 설정
+        if hasattr(self, 'cap'):
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
         while True:
             
@@ -716,14 +721,20 @@ class MovenetMPOpenvino:
             nb_pd_inferences += 1
             
             # 10프레임 마다 저장
-            if self.frame_counter % 3 == 0:  # 10프레임마다 조건을 확인
+            if self.frame_counter % 4 == 0:  # 10프레임마다 조건을 확인
                 self.save_to_array(bodies)
                 
-
             self.fps.update()               
 
             if self.show_fps:
-                self.fps.draw(frame, orig=(50,50), size=1, color=(180,180,100))
+                self.fps.draw(frame, orig=(50,50), size=1, color=(240,200,100))
+                
+            # # 웹캠 영상 출력 창 크기 설정
+            # resize_width = int(self.img_w * 0.9)
+            # resize_height = int(self.img_h * 0.9)
+            # cv2.namedWindow("Movenet", cv2.WINDOW_NORMAL)
+            # cv2.resizeWindow("Movenet", resize_width, resize_height) 
+            
             cv2.imshow("Movenet", frame)
 
             if self.output:
