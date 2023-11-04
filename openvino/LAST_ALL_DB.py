@@ -335,7 +335,7 @@ class MovenetMPOpenvino:
 ################################################# 모델##############################################
             
             # buy Refund
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 270 == 0:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 240 == 0:
                 input_data = self.temp_array_dict[body.track_id].copy()
                 
                 input_data = input_data[1:-1]
@@ -378,7 +378,7 @@ class MovenetMPOpenvino:
                     
                             
             # compare
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 270 == 30:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 240 == 30:
                 input_data = self.temp_array_dict[body.track_id].copy()
                 
                 input_data = input_data[1:-1]
@@ -422,7 +422,7 @@ class MovenetMPOpenvino:
                     
                     
             # jeon
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 270 == 90:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 240 == 60:
                 input_data = self.temp_array_dict[body.track_id].copy()
                 
                 input_data = input_data[1:-1]
@@ -469,7 +469,7 @@ class MovenetMPOpenvino:
                     
                             
             # select
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 270 == 120:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 240 == 90:
                 input_data = self.temp_array_dict[body.track_id].copy()
                 
                 input_data = input_data[1:-1]
@@ -511,7 +511,7 @@ class MovenetMPOpenvino:
                     
                     
             # smoke
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 270 == 150:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 240 == 120:
                 input_data = self.temp_array_dict[body.track_id].copy()
                 
                 input_data = input_data[1:-1]
@@ -553,7 +553,7 @@ class MovenetMPOpenvino:
                     
                     
             # theft
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 270 == 180:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 240 == 150:
                 input_data = self.temp_array_dict[body.track_id].copy()
                 
                 input_data = input_data[1:-1]
@@ -596,7 +596,7 @@ class MovenetMPOpenvino:
                     
             
              # yugi
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 270 == 210:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 240 == 180:
                 input_data = self.temp_array_dict[body.track_id].copy()
                 
                 input_data = input_data[1:-1]
@@ -635,7 +635,7 @@ class MovenetMPOpenvino:
                             insert_db_data(data)
             
              # violence
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 270 == 240:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 240 == 210:
                 input_data = self.temp_array_dict[body.track_id].copy()
                 
                 input_data = input_data[1:-1]
@@ -659,18 +659,18 @@ class MovenetMPOpenvino:
                 prediction = model9.predict(input_data)
                 
                 if np.argmax(prediction) == 0:
-                    self.predicted_label[body.track_id][8] = 'NO_violence'
+                    self.predicted_label[body.track_id][7] = 'NO_violence'
                 elif np.argmax(prediction) == 1:
-                    self.predicted_label[body.track_id][8] = 'YES_violence' 
+                    self.predicted_label[body.track_id][7] = 'YES_violence' 
                     
-                    if len(self.time_data[body.track_id][8]) == 0:
-                        self.time_data[body.track_id][8] = [now_time]
-                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 8]
+                    if len(self.time_data[body.track_id][7]) == 0:
+                        self.time_data[body.track_id][7] = [now_time]
+                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 7]
                         insert_db_data(data)
-                    elif len(self.time_data[body.track_id][8]) != 0:
-                        if (now_time - self.time_data[body.track_id][8][0]).seconds >= 30:
-                            self.time_data[body.track_id][8] = [now_time]
-                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 8]
+                    elif len(self.time_data[body.track_id][7]) != 0:
+                        if (now_time - self.time_data[body.track_id][7][0]).seconds >= 30:
+                            self.time_data[body.track_id][7] = [now_time]
+                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 7]
                             insert_db_data(data)
                     
                     
@@ -683,7 +683,7 @@ class MovenetMPOpenvino:
                 cv2.putText(frame, "{}".format(self.predicted_label[body.track_id][0:2]), text_position_1, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
                 cv2.putText(frame, "{}".format(self.predicted_label[body.track_id][2:4]), text_position_2, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
                 cv2.putText(frame, "{}".format(self.predicted_label[body.track_id][4:6]), text_position_3, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
-                cv2.putText(frame, "{}".format(self.predicted_label[body.track_id][6:8]), text_position_4, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
+                cv2.putText(frame, "{}".format(self.predicted_label[body.track_id][6:7]), text_position_4, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
                 
                 
     def save_to_array(self, bodies):
@@ -786,7 +786,7 @@ class MovenetMPOpenvino:
             self.fps.update()               
 
             if self.show_fps:
-                self.fps.draw(frame, orig=(50,50), size=1, color=(270,180,100))
+                self.fps.draw(frame, orig=(50,50), size=1, color=(240,180,100))
             cv2.imshow("Movenet", frame)
 
             if self.output:
