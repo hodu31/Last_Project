@@ -139,14 +139,14 @@ class MovenetMPOpenvino:
             self.input_type = "video"
             if input_src.isdigit(): 
                 input_type = "webcam"
-                input_src = 1 #int(input_src)
+                input_src = int(input_src)
             self.cap = cv2.VideoCapture(input_src)
             self.video_fps = int(self.cap.get(cv2.CAP_PROP_FPS))
             self.img_w = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
             self.img_h = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         print("Video FPS:", self.video_fps)
     
-        # Load Openvino models3
+        # Load Openvino models
         self.load_model(xml, device)     
 
         # Rendering flags
@@ -174,6 +174,48 @@ class MovenetMPOpenvino:
             pad_w = int(self.img_h * self.pd_w / self.pd_h - self.img_w)
             self.padding = Padding(pad_w, 0, self.img_w + pad_w, self.img_h)
         print("Padding:", self.padding)
+        
+    def load_model(self, xml_path, device):
+
+        print("Loading Inference Engine")
+        self.ie = IECore()
+        print("Device info:")
+        versions = self.ie.get_versions(device)
+        print("{}{}".format(" "*8, device))
+        print("{}MKLDNNPlugin version ......... {}.{}".format(" "*8, versions[device].major, versions[device].minor))
+        print("{}Build ........... {}".format(" "*8, versions[device].build_number))
+
+        name = os.path.splitext(xml_path)[0]
+        bin_path = name + '.bin'
+        print("Pose Detection model - Reading network files:\n\t{}\n\t{}".format(xml_path, bin_path))
+        self.pd_net = self.ie.read_network(model=xml_path, weights=bin_path)
+        # Input blob: input:0 - shape: [1, 3, 256, 256] (lightning)
+        # Output blob: Identity - shape: [1, 6, 56]
+        self.pd_input_blob = next(iter(self.pd_net.input_info))
+        print(f"Input blob: {self.pd_input_blob} - shape: {self.pd_net.input_info[self.pd_input_blob].input_data.shape}")
+        _,_,self.pd_h,self.pd_w = self.pd_net.input_info[self.pd_input_blob].input_data.shape
+        for o in self.pd_net.outputs.keys():
+            print(f"Output blob: {o} - shape: {self.pd_net.outputs[o].shape}")
+        self.pd_kps = "Identity"
+        print("Loading pose detection model into the plugin")
+        self.pd_exec_net = self.ie.load_network(network=self.pd_net, num_requests=1, device_name=device)
+
+        self.infer_nb = 0
+        self.infer_time_cumul = 0
+
+    def pad_and_resize(self, frame):
+        """ Pad and resize the image to prepare for the model input."""
+
+        padded = cv2.copyMakeBorder(frame, 
+                                        0, 
+                                        self.padding.h,
+                                        0, 
+                                        self.padding.w,
+                                        cv2.BORDER_CONSTANT)
+
+        padded = cv2.resize(padded, (self.pd_w, self.pd_h), interpolation=cv2.INTER_AREA)
+
+        return padded
         
     def load_model(self, xml_path, device):
 
