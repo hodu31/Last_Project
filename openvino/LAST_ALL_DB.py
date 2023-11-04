@@ -14,17 +14,16 @@ from datetime import datetime
 import mysql.connector
 from db_connect import insert_db_data
 from db_connect import insert_visit
-from db_connect import insert_vio
 
 
 model1 = load_model('C:/Last_Project/openvino/pred_model/buy.h5')
 model2 = load_model('C:/Last_Project/openvino/pred_model/compare.h5')
-model4 = load_model('C:/Last_Project/openvino/pred_model/jeon.h5')
-model5 = load_model('C:/Last_Project/openvino/pred_model/select.h5')
-model6 = load_model('C:/Last_Project/openvino/pred_model/smoke_last.h5')
-model7 = load_model('C:/Last_Project/openvino/pred_model/theft.h5')
-model8 = load_model('C:/Last_Project/openvino/pred_model/yugi.h5')
-model9 = load_model('C:/Last_Project/openvino/pred_model/violence.h5')
+model3 = load_model('C:/Last_Project/openvino/pred_model/jeon.h5')
+model4 = load_model('C:/Last_Project/openvino/pred_model/select.h5')
+model5 = load_model('C:/Last_Project/openvino/pred_model/smoke_last.h5')
+model6 = load_model('C:/Last_Project/openvino/pred_model/theft.h5')
+model7 = load_model('C:/Last_Project/openvino/pred_model/yugi.h5')
+model8 = load_model('C:/Last_Project/openvino/pred_model/violence.h5')
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -110,7 +109,7 @@ class MovenetMPOpenvino:
                 xml=DEFAULT_MODEL, 
                 device="CPU",
                 tracking="oks",
-                score_thresh=0.25,
+                score_thresh=0.3,
                 output=None):
         self.visited_tracks = {} 
         self.user_id = 'a001'
@@ -314,6 +313,13 @@ class MovenetMPOpenvino:
                         self.stop_frame_count_dict[body.track_id] = 0  # 움직임이 감지되면 카운트를 리셋합니다.
                 self.prev_keypoints[body.track_id] = current_keypoints  # 현재 키포인트를 저장합니다.
                 
+            # 방문객 입장시간 넣기
+            if body.track_id not in self.visited_tracks:
+                now = datetime.now()
+                now = now.replace(microsecond=0)
+                data_1 = [self.user_id, self.shop_id, body.track_id, now]
+                insert_visit(data_1)
+                self.visited_tracks[body.track_id] = True  # 2. 코드 실행 후에 body.track_id를 visited_tracks에 추
             
             now_time = datetime.now()
             now_time = now_time.replace(microsecond=0)
@@ -443,29 +449,29 @@ class MovenetMPOpenvino:
                 
                 input_data = np.array([input_data])
                 
-                prediction = model4.predict(input_data)
+                prediction = model3.predict(input_data)
                 
                 
                 
                 if np.argmax(prediction) == 0:
-                    self.predicted_label[body.track_id][3] = 'NO_jeon'
+                    self.predicted_label[body.track_id][2] = 'NO_jeon'
                 elif np.argmax(prediction) == 1:
-                    self.count_predicted[body.track_id][3] + 1
+                    self.count_predicted[body.track_id][2] + 1
                     
-                    if self.count_predicted[body.track_id][3] >= 3:  
-                        self.predicted_label[body.track_id][3] = 'YES_jeon'
+                    if self.count_predicted[body.track_id][2] >= 2:  
+                        self.predicted_label[body.track_id][2] = 'YES_jeon'
                         
-                        if len(self.time_data[body.track_id][3]) == 0:
-                            self.time_data[body.track_id][3] = [now_time]
+                        if len(self.time_data[body.track_id][2]) == 0:
+                            self.time_data[body.track_id][2] = [now_time]
                             data = [self.user_id ,self.shop_id, body.track_id, now_time, 4]
                             insert_db_data(data)
-                        elif len(self.time_data[body.track_id][3]) != 0:
-                            if (now_time - self.time_data[body.track_id][3][0]).seconds >= 30:
-                                self.time_data[body.track_id][3] = [now_time]
+                        elif len(self.time_data[body.track_id][2]) != 0:
+                            if (now_time - self.time_data[body.track_id][2][0]).seconds >=30:
+                                self.time_data[body.track_id][2] = [now_time]
                                 data = [self.user_id ,self.shop_id, body.track_id, now_time, 4]
                                 insert_db_data(data)
-                        if self.count_predicted[body.track_id][3] >= 5:  
-                            self.count_predicted[body.track_id][3] = 0
+                        if self.count_predicted[body.track_id][2] >= 5:  
+                            self.count_predicted[body.track_id][2] = 0
                     
                             
             # select
@@ -490,22 +496,22 @@ class MovenetMPOpenvino:
                 
                 input_data = np.array([input_data])
                 
-                prediction = model5.predict(input_data)
+                prediction = model4.predict(input_data)
                 
                 
                 
                 if np.argmax(prediction) == 0:
-                    self.predicted_label[body.track_id][4] = 'NO_select'
+                    self.predicted_label[body.track_id][3] = 'NO_select'
                 elif np.argmax(prediction) == 1:
-                    self.predicted_label[body.track_id][4] = 'YES_select'
+                    self.predicted_label[body.track_id][3] = 'YES_select'
                     
-                    if len(self.time_data[body.track_id][4]) == 0:
-                        self.time_data[body.track_id][4] = [now_time]
+                    if len(self.time_data[body.track_id][3]) == 0:
+                        self.time_data[body.track_id][3] = [now_time]
                         data = [self.user_id ,self.shop_id, body.track_id, now_time, 5]
                         insert_db_data(data)
-                    elif len(self.time_data[body.track_id][4]) != 0:
-                        if (now_time - self.time_data[body.track_id][4][0]).seconds >= 30:
-                            self.time_data[body.track_id][4] = [now_time]
+                    elif len(self.time_data[body.track_id][3]) != 0:
+                        if (now_time - self.time_data[body.track_id][3][0]).seconds >= 30:
+                            self.time_data[body.track_id][3] = [now_time]
                             data = [self.user_id ,self.shop_id, body.track_id, now_time, 5]
                             insert_db_data(data)
                     
@@ -532,22 +538,22 @@ class MovenetMPOpenvino:
                 
                 input_data = np.array([input_data])
                 
-                prediction = model6.predict(input_data)
+                prediction = model5.predict(input_data)
                 
                 
                 
                 if np.argmax(prediction) == 0:
-                    self.predicted_label[body.track_id][5] = 'NO_smoke'
+                    self.predicted_label[body.track_id][4] = 'NO_smoke'
                 elif np.argmax(prediction) == 1:
-                    self.predicted_label[body.track_id][5] = 'YES_smoke'
+                    self.predicted_label[body.track_id][4] = 'YES_smoke'
                     
-                    if len(self.time_data[body.track_id][5]) == 0:
-                        self.time_data[body.track_id][5] = [now_time]
+                    if len(self.time_data[body.track_id][4]) == 0:
+                        self.time_data[body.track_id][4] = [now_time]
                         data = [self.user_id ,self.shop_id, body.track_id, now_time, 6]
                         insert_db_data(data)
-                    elif len(self.time_data[body.track_id][5]) != 0:
-                        if (now_time - self.time_data[body.track_id][5][0]).seconds >= 30:
-                            self.time_data[body.track_id][5] = [now_time]
+                    elif len(self.time_data[body.track_id][4]) != 0:
+                        if (now_time - self.time_data[body.track_id][4][0]).seconds >= 30:
+                            self.time_data[body.track_id][4] = [now_time]
                             data = [self.user_id ,self.shop_id, body.track_id, now_time, 6]
                             insert_db_data(data)
                     
@@ -574,22 +580,22 @@ class MovenetMPOpenvino:
                 
                 input_data = np.array([input_data])
                 
-                prediction = model7.predict(input_data)
+                prediction = model6.predict(input_data)
                 
                 
                 
                 if np.argmax(prediction) == 0:
-                    self.predicted_label[body.track_id][6] = 'NO_theft'
+                    self.predicted_label[body.track_id][5] = 'NO_theft'
                 elif np.argmax(prediction) == 1:
-                    self.predicted_label[body.track_id][6] = 'YES_theft'
+                    self.predicted_label[body.track_id][5] = 'YES_theft'
                     
-                    if len(self.time_data[body.track_id][6]) == 0:
-                        self.time_data[body.track_id][6] = [now_time]
+                    if len(self.time_data[body.track_id][5]) == 0:
+                        self.time_data[body.track_id][5] = [now_time]
                         data = [self.user_id ,self.shop_id, body.track_id, now_time, 7]
                         insert_db_data(data)
-                    elif len(self.time_data[body.track_id][6]) != 0:
-                        if (now_time - self.time_data[body.track_id][6][0]).seconds >= 30:
-                            self.time_data[body.track_id][6] = [now_time]
+                    elif len(self.time_data[body.track_id][5]) != 0:
+                        if (now_time - self.time_data[body.track_id][5][0]).seconds >= 30:
+                            self.time_data[body.track_id][5] = [now_time]
                             data = [self.user_id ,self.shop_id, body.track_id, now_time, 7]
                             insert_db_data(data)
                     
@@ -617,20 +623,20 @@ class MovenetMPOpenvino:
                 
                 input_data = np.array([input_data])
                 
-                prediction = model8.predict(input_data)
+                prediction = model7.predict(input_data)
                 
                 if np.argmax(prediction) == 0:
-                    self.predicted_label[body.track_id][7] = 'NO_yugi'
+                    self.predicted_label[body.track_id][6] = 'NO_yugi'
                 elif np.argmax(prediction) == 1:
-                    self.predicted_label[body.track_id][7] = 'YES_yugi'
+                    self.predicted_label[body.track_id][6] = 'YES_yugi'
                     
-                    if len(self.time_data[body.track_id][7]) == 0:
-                        self.time_data[body.track_id][7] = [now_time]
+                    if len(self.time_data[body.track_id][6]) == 0:
+                        self.time_data[body.track_id][6] = [now_time]
                         data = [self.user_id ,self.shop_id, body.track_id, now_time, 8]
                         insert_db_data(data)
-                    elif len(self.time_data[body.track_id][7]) != 0:
-                        if (now_time - self.time_data[body.track_id][7][0]).seconds >= 30:
-                            self.time_data[body.track_id][7] = [now_time]
+                    elif len(self.time_data[body.track_id][6]) != 0:
+                        if (now_time - self.time_data[body.track_id][6][0]).seconds >= 30:
+                            self.time_data[body.track_id][6] = [now_time]
                             data = [self.user_id ,self.shop_id, body.track_id, now_time, 8]
                             insert_db_data(data)
             
@@ -656,7 +662,7 @@ class MovenetMPOpenvino:
                 
                 input_data = np.array([input_data])
                 
-                prediction = model9.predict(input_data)
+                prediction = model8.predict(input_data)
                 
                 if np.argmax(prediction) == 0:
                     self.predicted_label[body.track_id][7] = 'NO_violence'
@@ -836,7 +842,7 @@ if __name__ == "__main__":
     #                     help="Target device to run the model (default=%(default)s)") 
     parser.add_argument("-t", "--tracking", choices=["iou", "oks"], default="oks",
                         help="Enable tracking and specify method")
-    parser.add_argument("-s", "--score_threshold", default=0.25, type=float,
+    parser.add_argument("-s", "--score_threshold", default=0.3, type=float,
                         help="Confidence score (default=%(default)f)")                     
     parser.add_argument("-o","--output",
                         help="Path to output video file")
