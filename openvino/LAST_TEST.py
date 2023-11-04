@@ -19,7 +19,7 @@ import pandas as pd_lib
 # from db_connect import insert_vio
 
 
-model6 = load_model('C:/Last_Project/openvino/pred_model/jeon.h5')
+model6 = load_model('C:/Last_Project/openvino/pred_model/smoke_last.h5')
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -502,7 +502,7 @@ class MovenetMPOpenvino:
             nb_pd_inferences += 1
             
             # 10프레임 마다 저장
-            if self.frame_counter % 4 == 0:  # 10프레임마다 조건을 확인
+            if self.frame_counter % 3 == 0:  # 10프레임마다 조건을 확인
                 self.save_to_array(bodies)
                 
             self.fps.update()               
@@ -511,8 +511,8 @@ class MovenetMPOpenvino:
                 self.fps.draw(frame, orig=(50,50), size=1, color=(240,200,100))
                 
             # # 웹캠 영상 출력 창 크기 설정
-            resize_width = int(self.img_w * 1.5)
-            resize_height = int(self.img_h * 1.2)
+            resize_width = int(self.img_w * 2)
+            resize_height = int(self.img_h * 1.5)
             cv2.namedWindow("Movenet", cv2.WINDOW_NORMAL)
             cv2.resizeWindow("Movenet", resize_width, resize_height)    
             

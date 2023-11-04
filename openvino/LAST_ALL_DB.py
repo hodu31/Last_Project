@@ -112,7 +112,7 @@ class MovenetMPOpenvino:
                 xml=DEFAULT_MODEL, 
                 device="CPU",
                 tracking="oks",
-                score_thresh=0.3,
+                score_thresh=0.25,
                 output=None):
         self.visited_tracks = {} 
         self.user_id = 'a001'
@@ -301,7 +301,7 @@ class MovenetMPOpenvino:
                 if body.track_id in self.prev_keypoints:  # 해당 바디의 이전 키포인트를 가져옵니다.
                     prev_keypoints_for_body = self.prev_keypoints[body.track_id]
                     total_movement = np.sum(np.abs(current_keypoints - prev_keypoints_for_body))
-                    if total_movement < 15 * 17:
+                    if total_movement < 8 * 17:
                         # 여기서 해당 track_id가 stop_frame_count_dict에 없으면 초기화해줍니다.
                         if body.track_id not in self.stop_frame_count_dict:
                             self.stop_frame_count_dict[body.track_id] = 0
@@ -459,23 +459,20 @@ class MovenetMPOpenvino:
                 if np.argmax(prediction) == 0:
                     self.predicted_label[body.track_id][2] = 'NO_jeon'
                 elif np.argmax(prediction) == 1:
-                    self.count_predicted[body.track_id][2] + 1
+                    self.predicted_label[body.track_id][2] = 'YES_jeon'
                     
-                    if self.count_predicted[body.track_id][2] >= 2:  
-                        self.predicted_label[body.track_id][2] = 'YES_jeon'
-                        
-                        if len(self.time_data[body.track_id][2]) == 0:
+                    if len(self.time_data[body.track_id][2]) == 0:
+                        self.time_data[body.track_id][2] = [now_time]
+                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 4]
+                        insert_db_data(data)
+                    elif len(self.time_data[body.track_id][2]) != 0:
+                        if (now_time - self.time_data[body.track_id][2][0]).seconds >=30:
                             self.time_data[body.track_id][2] = [now_time]
                             data = [self.user_id ,self.shop_id, body.track_id, now_time, 4]
                             insert_db_data(data)
-                        elif len(self.time_data[body.track_id][2]) != 0:
-                            if (now_time - self.time_data[body.track_id][2][0]).seconds >=30:
-                                self.time_data[body.track_id][2] = [now_time]
-                                data = [self.user_id ,self.shop_id, body.track_id, now_time, 4]
-                                insert_db_data(data)
-                        if self.count_predicted[body.track_id][2] >= 5:  
-                            self.count_predicted[body.track_id][2] = 0
-                    
+                    if self.count_predicted[body.track_id][2] >= 5:  
+                        self.count_predicted[body.track_id][2] = 0
+                
                             
             # select
             if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 240 == 90:
@@ -845,7 +842,7 @@ if __name__ == "__main__":
     #                     help="Target device to run the model (default=%(default)s)") 
     parser.add_argument("-t", "--tracking", choices=["iou", "oks"], default="oks",
                         help="Enable tracking and specify method")
-    parser.add_argument("-s", "--score_threshold", default=0.3, type=float,
+    parser.add_argument("-s", "--score_threshold", default=0.25, type=float,
                         help="Confidence score (default=%(default)f)")                     
     parser.add_argument("-o","--output",
                         help="Path to output video file")
