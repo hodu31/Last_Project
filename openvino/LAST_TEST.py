@@ -19,7 +19,7 @@ import pandas as pd_lib
 # from db_connect import insert_vio
 
 
-model6 = load_model('C:/Last_Project/openvino/pred_model/smoke_last.h5')
+model6 = load_model('C:/Last_Project/openvino/pred_model/smoke_hi.h5')
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -396,9 +396,9 @@ class MovenetMPOpenvino:
                 
                 
                 if np.argmax(prediction) == 0:
-                    self.predicted_label[body.track_id][0] = 'NO_faint'
+                    self.predicted_label[body.track_id][0] = 'NO_smoke'
                 elif np.argmax(prediction) == 1:
-                    self.predicted_label[body.track_id][0] = 'YES_faint'
+                    self.predicted_label[body.track_id][0] = 'YES_smoke'
                     
                     
                     
