@@ -11,7 +11,11 @@ from Tracker import TrackerIoU, TrackerOKS, TRACK_COLORS
 from keras.models import load_model
 from datetime import datetime
 import pandas as pd_lib
-
+import tensorflow as tf
+### 실행결과 동일하게(완전 일치하지는 않음)
+tf.keras.utils.set_random_seed(42)
+### 텐서 연산 고정(완전 일치하지는 않음)
+tf.config.experimental.enable_op_determinism()
 
 # import mysql.connector
 # from db_connect import insert_db_data

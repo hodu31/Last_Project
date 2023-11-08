@@ -14,6 +14,11 @@ from datetime import datetime
 import mysql.connector
 from db_connect import insert_db_data
 from db_connect import insert_visit
+import tensorflow as tf
+### 실행결과 동일하게(완전 일치하지는 않음)
+tf.keras.utils.set_random_seed(42)
+### 텐서 연산 고정(완전 일치하지는 않음)
+tf.config.experimental.enable_op_determinism()
 
 
 model1 = load_model('C:/Last_Project/openvino/pred_model/buy.h5')

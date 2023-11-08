@@ -14,7 +14,11 @@ from datetime import datetime
 import mysql.connector
 from db_connect import insert_db_data
 from db_connect import insert_visit
-
+import tensorflow as tf
+### 실행결과 동일하게(완전 일치하지는 않음)
+tf.keras.utils.set_random_seed(42)
+### 텐서 연산 고정(완전 일치하지는 않음)
+tf.config.experimental.enable_op_determinism()
 
 
 model3 = load_model('C:/Last_Project/openvino/pred_model/jeon.h5')
@@ -111,7 +115,7 @@ class MovenetMPOpenvino:
                 xml=DEFAULT_MODEL, 
                 device="CPU",
                 tracking="oks",
-                score_thresh=0.25,
+                score_thresh=0.3,
                 output=None):
         self.visited_tracks = {} 
         self.user_id = 'a001'
@@ -150,7 +154,7 @@ class MovenetMPOpenvino:
             self.input_type = "video"
             if input_src.isdigit(): 
                 input_type = "webcam"
-                input_src = int(input_src) #2
+                input_src = 1 #int(input_src) 
             self.cap = cv2.VideoCapture(input_src)
             self.video_fps = int(self.cap.get(cv2.CAP_PROP_FPS))
             self.img_w = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -343,7 +347,7 @@ class MovenetMPOpenvino:
 ################################################# 모델##############################################
             
             # jeon
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 240 == 60:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 60 == 0:
                 input_data = self.temp_array_dict[body.track_id].copy()
                 
                 input_data = input_data[1:-1]
@@ -371,25 +375,28 @@ class MovenetMPOpenvino:
                 if np.argmax(prediction) == 0:
                     self.predicted_label[body.track_id][0] = 'NO_jeon'
                 elif np.argmax(prediction) == 1:
-                    self.predicted_label[body.track_id][0] = 'YES_jeon'
+                    self.count_predicted[body.track_id][0] += 1
                     
-                    if len(self.time_data[body.track_id][0]) == 0:
-                        self.time_data[body.track_id][0] = [now_time]
-                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 4]
-                        insert_db_data(data)
-                    elif len(self.time_data[body.track_id][0]) != 0:
-                        if (now_time - self.time_data[body.track_id][0][0]).seconds >=30:
+                    if self.count_predicted[body.track_id][0] > 4:
+                        self.predicted_label[body.track_id][0] = 'YES_jeon'
+                        
+                        if len(self.time_data[body.track_id][0]) == 0:
                             self.time_data[body.track_id][0] = [now_time]
                             data = [self.user_id ,self.shop_id, body.track_id, now_time, 4]
                             insert_db_data(data)
-                    if self.count_predicted[body.track_id][0] >= 5:  
-                        self.count_predicted[body.track_id][0] = 0
+                        elif len(self.time_data[body.track_id][0]) != 0:
+                            if (now_time - self.time_data[body.track_id][0][0]).seconds >=30:
+                                self.time_data[body.track_id][0] = [now_time]
+                                data = [self.user_id ,self.shop_id, body.track_id, now_time, 4]
+                                insert_db_data(data)
+                        if self.count_predicted[body.track_id][0] > 6:  
+                            self.count_predicted[body.track_id][0] = 0
                 
                             
             
                     
             # smoke
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 240 == 120:
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 60 == 30:
                 input_data = self.temp_array_dict[body.track_id].copy()
                 
                 input_data = input_data[1:-1]
@@ -417,7 +424,10 @@ class MovenetMPOpenvino:
                 if np.argmax(prediction) == 0:
                     self.predicted_label[body.track_id][1] = 'NO_smoke'
                 elif np.argmax(prediction) == 1:
-                    self.predicted_label[body.track_id][1] = 'YES_smoke'
+                    self.count_predicted[body.track_id][1] += 1
+                    
+                    if self.count_predicted[body.track_id][1] > 4:
+                        self.predicted_label[body.track_id][1] = 'YES_smoke'
                     
                     if len(self.time_data[body.track_id][1]) == 0:
                         self.time_data[body.track_id][1] = [now_time]
@@ -428,6 +438,9 @@ class MovenetMPOpenvino:
                             self.time_data[body.track_id][1] = [now_time]
                             data = [self.user_id ,self.shop_id, body.track_id, now_time, 6]
                             insert_db_data(data)
+                            
+                    if self.count_predicted[body.track_id][1] > 6:
+                        self.count_predicted[body.track_id][1] = 0
                     
                     
 
@@ -586,7 +599,7 @@ if __name__ == "__main__":
     #                     help="Target device to run the model (default=%(default)s)") 
     parser.add_argument("-t", "--tracking", choices=["iou", "oks"], default="oks",
                         help="Enable tracking and specify method")
-    parser.add_argument("-s", "--score_threshold", default=0.25, type=float,
+    parser.add_argument("-s", "--score_threshold", default=0.3, type=float,
                         help="Confidence score (default=%(default)f)")                     
     parser.add_argument("-o","--output",
                         help="Path to output video file")
