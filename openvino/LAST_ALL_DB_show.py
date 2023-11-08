@@ -8,18 +8,21 @@ import argparse
 import os
 from openvino.inference_engine import IENetwork, IECore
 from Tracker import TrackerIoU, TrackerOKS, TRACK_COLORS
+import pandas as pd
 from keras.models import load_model
 from datetime import datetime
-import pandas as pd_lib
+import mysql.connector
+from db_connect import insert_db_data
+from db_connect import insert_visit
 
 
-# import mysql.connector
-# from db_connect import insert_db_data
-# from db_connect import insert_visit
-# from db_connect import insert_vio
+
+model3 = load_model('C:/Last_Project/openvino/pred_model/jeon.h5')
+
+model5 = load_model('C:/Last_Project/openvino/pred_model/smoke_last.h5')
 
 
-model6 = load_model('C:/Last_Project/openvino/pred_model/smoke_last.h5')
+
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -101,22 +104,26 @@ class Body:
 Padding = namedtuple('Padding', ['w', 'h', 'padded_w', 'padded_h'])
 
 # 고정된 패딩 값으로 Padding 인스턴스 생성
-#padding_values = Padding(w=0, h=840, padded_w=1920, padded_h=1920)
-
+padding_values = Padding(w=0, h=840, padded_w=1920, padded_h=1920)
 
 class MovenetMPOpenvino:
     def __init__(self, input_src=None,
                 xml=DEFAULT_MODEL, 
                 device="CPU",
                 tracking="oks",
-                score_thresh=0.3,
+                score_thresh=0.25,
                 output=None):
         self.visited_tracks = {} 
+        self.user_id = 'a001'
+        self.shop_id = '#001'
+        self.vio_time = None
         self.predicted_label = {}
+        self.count_predicted = {}
+        self.predict_violence = None
+        self.time_data = {}
         self.db_data = []
         self.prev_keypoints = {}
         self.temp_array_dict = {}
-        self.last_dict = {}
         self.array_list = []
         self.stop_frame_count_dict = {}
         self.stop_frame_count = 0
@@ -138,11 +145,12 @@ class MovenetMPOpenvino:
             self.img = cv2.imread(input_src)
             self.video_fps = 25
             self.img_h, self.img_w = self.img.shape[:2]
+            
         else:
             self.input_type = "video"
             if input_src.isdigit(): 
                 input_type = "webcam"
-                input_src = int(input_src)
+                input_src = int(input_src) #2
             self.cap = cv2.VideoCapture(input_src)
             self.video_fps = int(self.cap.get(cv2.CAP_PROP_FPS))
             self.img_w = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -219,48 +227,6 @@ class MovenetMPOpenvino:
         padded = cv2.resize(padded, (self.pd_w, self.pd_h), interpolation=cv2.INTER_AREA)
 
         return padded
-        
-    def load_model(self, xml_path, device):
-
-        print("Loading Inference Engine")
-        self.ie = IECore()
-        print("Device info:")
-        versions = self.ie.get_versions(device)
-        print("{}{}".format(" "*8, device))
-        print("{}MKLDNNPlugin version ......... {}.{}".format(" "*8, versions[device].major, versions[device].minor))
-        print("{}Build ........... {}".format(" "*8, versions[device].build_number))
-
-        name = os.path.splitext(xml_path)[0]
-        bin_path = name + '.bin'
-        print("Pose Detection model - Reading network files:\n\t{}\n\t{}".format(xml_path, bin_path))
-        self.pd_net = self.ie.read_network(model=xml_path, weights=bin_path)
-        # Input blob: input:0 - shape: [1, 3, 256, 256] (lightning)
-        # Output blob: Identity - shape: [1, 6, 56]
-        self.pd_input_blob = next(iter(self.pd_net.input_info))
-        print(f"Input blob: {self.pd_input_blob} - shape: {self.pd_net.input_info[self.pd_input_blob].input_data.shape}")
-        _,_,self.pd_h,self.pd_w = self.pd_net.input_info[self.pd_input_blob].input_data.shape
-        for o in self.pd_net.outputs.keys():
-            print(f"Output blob: {o} - shape: {self.pd_net.outputs[o].shape}")
-        self.pd_kps = "Identity"
-        print("Loading pose detection model into the plugin")
-        self.pd_exec_net = self.ie.load_network(network=self.pd_net, num_requests=1, device_name=device)
-
-        self.infer_nb = 0
-        self.infer_time_cumul = 0
-
-    def pad_and_resize(self, frame):
-        """ Pad and resize the image to prepare for the model input."""
-
-        padded = cv2.copyMakeBorder(frame, 
-                                        0, 
-                                        self.padding.h,
-                                        0, 
-                                        self.padding.w,
-                                        cv2.BORDER_CONSTANT)
-
-        padded = cv2.resize(padded, (self.pd_w, self.pd_h), interpolation=cv2.INTER_AREA)
-
-        return padded
 
     def pd_postprocess(self, inference):
         result = np.squeeze(inference[self.pd_kps]) # 6x56
@@ -284,7 +250,7 @@ class MovenetMPOpenvino:
 ### 웹캠에 표시하는 부분
     def pd_render(self, frame, bodies):
         thickness = 3 
-        color_skeleton = (255, 192, 90)
+        color_skeleton = (255, 180, 90)
         color_box = (0,255,255)
         for body in bodies:
             if self.tracking:
@@ -334,7 +300,7 @@ class MovenetMPOpenvino:
                 if body.track_id in self.prev_keypoints:  # 해당 바디의 이전 키포인트를 가져옵니다.
                     prev_keypoints_for_body = self.prev_keypoints[body.track_id]
                     total_movement = np.sum(np.abs(current_keypoints - prev_keypoints_for_body))
-                    if total_movement < 10 * 17:
+                    if total_movement < 8 * 17:
                         # 여기서 해당 track_id가 stop_frame_count_dict에 없으면 초기화해줍니다.
                         if body.track_id not in self.stop_frame_count_dict:
                             self.stop_frame_count_dict[body.track_id] = 0
@@ -349,6 +315,13 @@ class MovenetMPOpenvino:
                         self.stop_frame_count_dict[body.track_id] = 0  # 움직임이 감지되면 카운트를 리셋합니다.
                 self.prev_keypoints[body.track_id] = current_keypoints  # 현재 키포인트를 저장합니다.
                 
+            # 방문객 입장시간 넣기
+            if body.track_id not in self.visited_tracks:
+                now = datetime.now()
+                now = now.replace(microsecond=0)
+                data_1 = [self.user_id, self.shop_id, body.track_id, now]
+                insert_visit(data_1)
+                self.visited_tracks[body.track_id] = True  # 2. 코드 실행 후에 body.track_id를 visited_tracks에 추
             
             now_time = datetime.now()
             now_time = now_time.replace(microsecond=0)
@@ -358,13 +331,19 @@ class MovenetMPOpenvino:
                 self.temp_array_dict[body.track_id] = np.array([])
                 
             if body.track_id not in self.predicted_label and len(self.temp_array_dict[body.track_id]) >= 200:
-                self.predicted_label[body.track_id] = [None]
+                self.predicted_label[body.track_id] = [None, None]
                 
+            if body.track_id not in self.time_data and len(self.temp_array_dict[body.track_id]) >= 200:
+                self.time_data[body.track_id] = [[], []]
+                
+            if body.track_id not in self.count_predicted and len(self.temp_array_dict[body.track_id]) >= 200:
+                self.count_predicted[body.track_id] = [0, 0]
+            
 
-################################################# 모델##############################################      
-                            
-            # smoke
-            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 30 == 0:
+################################################# 모델##############################################
+            
+            # jeon
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 240 == 60:
                 input_data = self.temp_array_dict[body.track_id].copy()
                 
                 input_data = input_data[1:-1]
@@ -385,31 +364,78 @@ class MovenetMPOpenvino:
                 
                 input_data = np.array([input_data])
                 
-                
-                # # Save to CSV
-                # df = pd_lib.DataFrame(input_data[0])
-                # df.to_csv(f"input_data_trackid_{body.track_id}_frame_{self.frame_counter}.csv", index=False)
-                
-                
-                prediction = model6.predict(input_data)
+                prediction = model3.predict(input_data)
                 
                 
                 
                 if np.argmax(prediction) == 0:
-                    self.predicted_label[body.track_id][0] = 'NO_smoke'
+                    self.predicted_label[body.track_id][0] = 'NO_jeon'
                 elif np.argmax(prediction) == 1:
-                    self.predicted_label[body.track_id][0] = 'YES_smoke'
+                    self.predicted_label[body.track_id][0] = 'YES_jeon'
                     
+                    if len(self.time_data[body.track_id][0]) == 0:
+                        self.time_data[body.track_id][0] = [now_time]
+                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 4]
+                        insert_db_data(data)
+                    elif len(self.time_data[body.track_id][0]) != 0:
+                        if (now_time - self.time_data[body.track_id][0][0]).seconds >=30:
+                            self.time_data[body.track_id][0] = [now_time]
+                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 4]
+                            insert_db_data(data)
+                    if self.count_predicted[body.track_id][0] >= 5:  
+                        self.count_predicted[body.track_id][0] = 0
+                
+                            
+            
+                    
+            # smoke
+            if len(self.temp_array_dict[body.track_id]) >= 200 and self.frame_counter % 240 == 120:
+                input_data = self.temp_array_dict[body.track_id].copy()
+                
+                input_data = input_data[1:-1]
+                
+                input_data[:, 0] = 1
+                            
+                # 패딩 추가
+                padding = np.zeros((610 - input_data.shape[0], input_data.shape[1]))
+                
+                input_data = np.vstack((input_data, padding))
+                
+                # 마지막 열에 인덱스 추가
+                index_array = np.arange(input_data.shape[0]).reshape(-1, 1)
+                input_data = np.hstack((input_data, index_array))
+                
+                # 데이터 형변환
+                input_data = input_data.astype(np.float32)
+                
+                input_data = np.array([input_data])
+                
+                prediction = model5.predict(input_data)
+                
+                
+                
+                if np.argmax(prediction) == 0:
+                    self.predicted_label[body.track_id][1] = 'NO_smoke'
+                elif np.argmax(prediction) == 1:
+                    self.predicted_label[body.track_id][1] = 'YES_smoke'
+                    
+                    if len(self.time_data[body.track_id][1]) == 0:
+                        self.time_data[body.track_id][1] = [now_time]
+                        data = [self.user_id ,self.shop_id, body.track_id, now_time, 6]
+                        insert_db_data(data)
+                    elif len(self.time_data[body.track_id][1]) != 0:
+                        if (now_time - self.time_data[body.track_id][1][0]).seconds >= 30:
+                            self.time_data[body.track_id][1] = [now_time]
+                            data = [self.user_id ,self.shop_id, body.track_id, now_time, 6]
+                            insert_db_data(data)
                     
                     
 
             if self.predicted_label is not None and body.track_id in self.predicted_label:
                 text_position_1 = (body.xmin, body.ymin+30)
-                cv2.putText(frame, "{}".format(self.predicted_label[body.track_id][0]), text_position_1, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
-             
-    
-
-        
+            
+                cv2.putText(frame, "{}".format(self.predicted_label[body.track_id][0:2]), text_position_1, cv2.FONT_HERSHEY_PLAIN, 2, color_box, 3)
+              
     def save_to_array(self, bodies):
         if not hasattr(self, 'temp_array_dict'):
             self.temp_array_dict = {}
@@ -464,8 +490,9 @@ class MovenetMPOpenvino:
         # # 데이터 확인하기 
         #     for track_id, array in self.prev_joint_positions.items():
         #         print(track_id, array)   
-        
-            
+    
+    
+    
     def run(self):
 
         self.fps = FPS()
@@ -502,20 +529,14 @@ class MovenetMPOpenvino:
             nb_pd_inferences += 1
             
             # 10프레임 마다 저장
-            if self.frame_counter % 3 == 0:  # 10프레임마다 조건을 확인
+            if self.frame_counter % 4 == 0:  # 10프레임마다 조건을 확인
                 self.save_to_array(bodies)
                 
+
             self.fps.update()               
 
             if self.show_fps:
-                self.fps.draw(frame, orig=(50,50), size=1, color=(240,200,100))
-                
-            # # # 웹캠 영상 출력 창 크기 설정
-            # resize_width = int(self.img_w * 2)
-            # resize_height = int(self.img_h * 1.5)
-            # cv2.namedWindow("Movenet", cv2.WINDOW_NORMAL)
-            # cv2.resizeWindow("Movenet", resize_width, resize_height)    
-            
+                self.fps.draw(frame, orig=(50,50), size=1, color=(240,180,100))
             cv2.imshow("Movenet", frame)
 
             if self.output:
@@ -565,7 +586,7 @@ if __name__ == "__main__":
     #                     help="Target device to run the model (default=%(default)s)") 
     parser.add_argument("-t", "--tracking", choices=["iou", "oks"], default="oks",
                         help="Enable tracking and specify method")
-    parser.add_argument("-s", "--score_threshold", default=0.3, type=float,
+    parser.add_argument("-s", "--score_threshold", default=0.25, type=float,
                         help="Confidence score (default=%(default)f)")                     
     parser.add_argument("-o","--output",
                         help="Path to output video file")
