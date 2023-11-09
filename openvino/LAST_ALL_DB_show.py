@@ -374,10 +374,11 @@ class MovenetMPOpenvino:
                 
                 if np.argmax(prediction) == 0:
                     self.predicted_label[body.track_id][0] = 'NO_jeon'
+                    self.count_predicted[body.track_id][0] = 0
                 elif np.argmax(prediction) == 1:
                     self.count_predicted[body.track_id][0] += 1
                     
-                    if self.count_predicted[body.track_id][0] > 4:
+                    if self.count_predicted[body.track_id][0] > 5:
                         self.predicted_label[body.track_id][0] = 'YES_jeon'
                         
                         if len(self.time_data[body.track_id][0]) == 0:
@@ -389,8 +390,7 @@ class MovenetMPOpenvino:
                                 self.time_data[body.track_id][0] = [now_time]
                                 data = [self.user_id ,self.shop_id, body.track_id, now_time, 4]
                                 insert_db_data(data)
-                        if self.count_predicted[body.track_id][0] > 6:  
-                            self.count_predicted[body.track_id][0] = 0
+                       
                 
                             
             

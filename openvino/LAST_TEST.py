@@ -120,6 +120,7 @@ class MovenetMPOpenvino:
         self.db_data = []
         self.prev_keypoints = {}
         self.temp_array_dict = {}
+        self.count_predicted = {}
         self.last_dict = {}
         self.array_list = []
         self.stop_frame_count_dict = {}
@@ -363,6 +364,9 @@ class MovenetMPOpenvino:
                 
             if body.track_id not in self.predicted_label and len(self.temp_array_dict[body.track_id]) >= 200:
                 self.predicted_label[body.track_id] = [None]
+            
+            if body.track_id not in self.count_predicted and len(self.temp_array_dict[body.track_id]) >= 200:
+                self.count_predicted[body.track_id] = [0, 0]
                 
 
 ################################################# 모델##############################################      
@@ -401,8 +405,13 @@ class MovenetMPOpenvino:
                 
                 if np.argmax(prediction) == 0:
                     self.predicted_label[body.track_id][0] = 'NO_smoke'
+                    self.count_predicted[body.track_id][0] = 0
                 elif np.argmax(prediction) == 1:
-                    self.predicted_label[body.track_id][0] = 'YES_smoke'
+                    self.count_predicted[body.track_id][0] += 1
+                    
+                    if self.count_predicted[body.track_id][0] > 4:
+                        self.predicted_label[body.track_id][0] = 'YES_smoke'
+
                     
                     
                     
