@@ -154,7 +154,7 @@ class MovenetMPOpenvino:
             self.input_type = "video"
             if input_src.isdigit(): 
                 input_type = "webcam"
-                input_src = 1 #int(input_src) 
+                input_src = int(input_src) 
             self.cap = cv2.VideoCapture(input_src)
             self.video_fps = int(self.cap.get(cv2.CAP_PROP_FPS))
             self.img_w = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
